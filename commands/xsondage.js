@@ -14,7 +14,6 @@ module.exports = {
     callback: ({ message, channel, args }) => {
         const question = args.shift()
         const choix = args
-
         const embed = new MessageEmbed().setColor('#6d99d3').setTitle(question)
 
         let choix_icone = 'a'
