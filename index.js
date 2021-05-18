@@ -47,8 +47,6 @@ client.on('messageReactionRemove', async (reaction, user) => {
             // save in database here
             const embed = new DiscordJS.MessageEmbed().setTitle('Désabonnement à l\'événement pris en compte').setDescription('Tu ne receveras plus aucun rappel par message privé pour cet événement.').setAuthor('🔔 Notifications xBot').setColor('#6d99d3')
             reaction.message.guild.members.cache.find(member => member.id === user.id).send(embed)
-        }else if(reaction._emoji.name != "🔔"){
-            reaction.remove()
         }
     }
 })

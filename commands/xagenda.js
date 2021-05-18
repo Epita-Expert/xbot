@@ -8,7 +8,7 @@ module.exports = {
     description: 'Ajoute un événement dans le salon Agenda',
     expectedArgs: '<nom> <description> <date> [module] [prof]',
     minArgs: 3,
-    maxArgs: 6,
+    maxArgs: 5,
     callback: ({ message, channel, args }) => {
         const [nom, description, date, module, prof] = args
 
