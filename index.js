@@ -8,8 +8,13 @@ let allCommands = {}
 glob.sync( './commands/*.js' ).forEach( file => allCommands = {...allCommands, ...require(path.resolve(file))} )
 
 const commands = allCommands
-const guildId = process.env.SERVER_ID
-const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_MESSAGE_REACTIONS] })
+const guildId = process.env.SERVER_ID.split(',')
+const client = new Client({ intents: [
+        Intents.FLAGS.GUILDS,
+        Intents.FLAGS.GUILD_MESSAGES,
+        Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
+        Intents.FLAGS.GUILD_MEMBERS
+    ] })
 
 const getApp = (guildId) => {
     const app = client.api.applications(client.user.id)
@@ -22,20 +27,38 @@ const getApp = (guildId) => {
 client.once('ready', () => {
     client.user.setActivity("yBot galérer", { type: "WATCHING"})
 
-    //caching AGENDA channel for reaction listener
+    //caching AGENDA channel for reaction listener & MEMBERS
     client.channels.cache.get(process.env.AGENDA_ID).messages.fetch()
+    guildId.forEach((guild) => {
+        client.guilds.cache.get(guild).members.fetch()
+    })
 
     //getApp( guildId ).commands('845286888108851250').delete()
 
     for (const [name, cmd] of Object.entries(commands)) {
-        if (typeof cmd.data === 'object')
-            getApp( cmd.isGlobal ? null : guildId ).commands.post({data: cmd.data}).then(e => console.log(name + " -> Successfully posted"))
+        if (typeof cmd.data === 'object') {
+            if (cmd.isGlobal) {
+                getApp().commands.post({data: cmd.data}).then(e => console.log(name + " -> Successfully posted [Global command]"))
+            } else {
+                guildId.forEach((guild) => {
+                    getApp(guild).commands.post({data: cmd.data}).then(e => console.log(name + " -> Successfully posted [guildId:" + guild + "]"))
+                })
+            }
+            if (typeof cmd.init === 'function')
+                cmd.init({client:client})
+        }
     }
 
-
-    getApp(guildId).commands.get().then((allCmds) => {
+    getApp().commands.get().then((allCmds) => {
         allCmds.forEach((e) => {
-            console.log(e.name + " -> " + e.id)
+            console.log(e.name + " -> " + e.id + " [Global command]")
+        })
+    })
+    guildId.forEach((guild) => {
+        getApp(guild).commands.get().then((allCmds) => {
+            allCmds.forEach((e) => {
+                console.log(e.name + " -> " + e.id + " [guildId:" + guild + "]")
+            })
         })
     })
 })
@@ -46,33 +69,21 @@ client.on('interaction', interaction => {
 
     if (interaction.commandName in commands) {
         const args = {}
-        if (interaction.options) {
-            for (const option of interaction.options) {
-                const {name, value} = option
-                args[name] = value
+        const subcommands = []
+        if (interaction.options.length) {
+            let options = interaction.options
+            while (options && options.length && (options[0].type === "SUB_COMMAND" || options[0].type === "SUB_COMMAND_GROUP")) {
+                subcommands.push(options[0].name)
+                options = options[0].options
+            }
+            if (options) {
+                for (const option of options) {
+                    const {name, value} = option
+                    args[name] = value
+                }
             }
         }
-        interaction.reply(commands[interaction.commandName].callback({channel:interaction.channel, options:args}))
-    }
-})
-
-client.on('messageReactionAdd', async (reaction, user) => {
-    if(reaction.message.channel.id === process.env.AGENDA_ID){
-        if(reaction._emoji.name == "🔔" && !user.bot){
-            // save in database here
-            const embed = new MessageEmbed().setTitle('Abonnement à l\'événement pris en compte').setDescription('Tu receveras un rappel 2 semaines, 1 semaine, 48h et 24h avant l\'événement par message privé.').setAuthor('🔔 Notifications xBot').setColor('#6d99d3')
-            reaction.message.guild.members.cache.find(member => member.id === user.id).send(embed)
-        }
-    }
-})
-
-client.on('messageReactionRemove', async (reaction, user) => {
-    if(reaction.message.channel.id === process.env.AGENDA_ID){
-        if(reaction._emoji.name == "🔔" && !user.bot){
-            // save in database here
-            const embed = new MessageEmbed().setTitle('Désabonnement à l\'événement pris en compte').setDescription('Tu ne receveras plus aucun rappel par message privé pour cet événement.').setAuthor('🔔 Notifications xBot').setColor('#6d99d3')
-            reaction.message.guild.members.cache.find(member => member.id === user.id).send(embed)
-        }
+        interaction.reply(commands[interaction.commandName].callback({channel:interaction.channel, options:args, user:interaction.user, subcommands:subcommands}))
     }
 })
 

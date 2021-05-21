@@ -18,9 +18,10 @@ module.exports.dit = {
             }
         ]
     },
-    callback: ({ channel, options }) => {
+    callback: ({ channel, options, user }) => {
         setTimeout(() => {
             let targetChan = options.salon ? channel.guild.channels.cache.get(options.salon) : channel
+            console.log(user.username + " (id:" + user.id + ") used the bot to say '" + options.message + "'")
             channel.messages.fetch({ limit: 1 }).then(messages => {
                 let lastMessage = messages.first()
                 if (lastMessage.author.bot) {
@@ -29,7 +30,7 @@ module.exports.dit = {
                     })
                 }
             })
-        }, 100)
+        }, 75)
         return '*Envoi du message :* ' + options.message || 'Oups, ça a mal tourné...'
     }
 }
