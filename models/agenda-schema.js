@@ -19,6 +19,7 @@ const agendaSchema = new mongoose.Schema({
     channelId: reqString,
     guildId: reqString,
     name: reqString,
+    description: reqString,
     subscribers: [String],
     send: {
         type: Array,

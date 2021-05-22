@@ -44,8 +44,6 @@ client.once('ready', () => {
                     getApp(guild).commands.post({data: cmd.data}).then(e => console.log(name + " -> Successfully posted [guildId:" + guild + "]"))
                 })
             }
-            if (typeof cmd.init === 'function')
-                cmd.init({client:client})
         }
     }
 
@@ -58,12 +56,16 @@ client.once('ready', () => {
         getApp(guild).commands.get().then((allCmds) => {
             allCmds.forEach((e) => {
                 console.log(e.name + " -> " + e.id + " [guildId:" + guild + "]")
+                if (typeof commands[e.name].init === 'function' && !('isInit' in commands[e.name])) {
+                    commands[e.name].init({client:client})
+                    commands[e.name].isInit = true
+                }
             })
         })
     })
 })
 
-client.on('interaction', interaction => {
+client.on('interaction', async interaction => {
     if (!interaction.isCommand())
         return
 
@@ -83,12 +85,15 @@ client.on('interaction', interaction => {
                 }
             }
         }
-        interaction.reply(commands[interaction.commandName].callback({channel:interaction.channel, options:args, user:interaction.user, subcommands:subcommands}))
+        const callback = await commands[interaction.commandName].callback({channel:interaction.channel, options:args, user:interaction.user, subcommands:subcommands})
+        interaction.reply(callback)
     }
 })
 
 client.on('message', async (message) => {
-    if (message.mentions.users.has(process.env.XBOT_ID))
+    if (message.mentions.users.has(process.env.XBOT_ID)
+        || message.content.indexOf("<@"+process.env.XBOT_ID+">") > -1
+        || message.content.indexOf("<@!"+process.env.XBOT_ID+">") > -1)
         message.react('👀')
 })
 
