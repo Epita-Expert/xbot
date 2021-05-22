@@ -31,6 +31,6 @@ module.exports.dit = {
                 }
             })
         }, 75)
-        return '*Envoi du message :* ' + options.message || 'Oups, ça a mal tourné...'
+        return 'Si tu vois ce message trop longtemps, c\'est que ça a mal tourné...' || 'Oups, ça a mal tourné...'
     }
 }

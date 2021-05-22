@@ -19,6 +19,11 @@ for (i = 0; i < 60; i+=5) {
     minute.push({name: ("0" + i).slice(-2), value:i})
 }
 
+
+const getAgenda = (guild) => {
+    return guild.channels.cache.find(chan => chan.name === "📅-agenda")
+}
+
 module.exports.agenda = {
     isGlobal: false,
     data: {
@@ -227,40 +232,51 @@ module.exports.agenda = {
 
 
         client.on('messageReactionAdd', async (reaction, user) => {
-            if(reaction.message.channel.id === process.env.AGENDA_ID){
+            const agendaChannel = getAgenda(reaction.message.channel.guild)
+            if(agendaChannel && reaction.message.channel.id === agendaChannel.id){
                 if(reaction._emoji.name == "🔔" && !user.bot){
                     let event = await agendaSchema.findOneAndUpdate(
                         { msgId: reaction.message.id, channelId: reaction.message.channel.id },
                         { $push: { subscribers: user.id  } },
                         { useFindAndModify: false, new: true }
                     )
-                    let dateNow = new Date()
-                    let embed = null
-                    if (dateNow > event.date) {
-                        embed = new MessageEmbed().setTitle('Abonnement à l\'événement "'+ event.name +'" pris en compte').setDescription('Attention il semblerait que cet événement est déjà passé, tu ne receveras donc pas de rappels pour celui-ci.').setAuthor('🔔 Notifications xBot').setColor('#6d99d3')
+                    if (event) {
+                        let dateNow = new Date()
+                        let embed = null
+                        if (dateNow > event.date) {
+                            embed = new MessageEmbed().setTitle('Abonnement à l\'événement "'+ event.name +'" pris en compte').setDescription('Attention il semblerait que cet événement est déjà passé, tu ne receveras donc pas de rappels pour celui-ci.').setAuthor('🔔 Notifications xBot').setColor('#6d99d3')
+                        } else {
+                            embed = new MessageEmbed().setTitle('Abonnement à l\'événement "'+ event.name +'" pris en compte').setDescription('Tu receveras un rappel 2 semaines, 1 semaine, 48h et 24h avant l\'événement par message privé.').setAuthor('🔔 Notifications xBot').setColor('#6d99d3')
+                        }
+                        reaction.message.guild.members.cache.find(member => member.id === user.id).send(embed)
                     } else {
-                        embed = new MessageEmbed().setTitle('Abonnement à l\'événement "'+ event.name +'" pris en compte').setDescription('Tu receveras un rappel 2 semaines, 1 semaine, 48h et 24h avant l\'événement par message privé.').setAuthor('🔔 Notifications xBot').setColor('#6d99d3')
+                        reaction.remove()
                     }
-                    reaction.message.guild.members.cache.find(member => member.id === user.id).send(embed)
                 }
             }
         })
 
         client.on('messageReactionRemove', async (reaction, user) => {
-            if(reaction.message.channel.id === process.env.AGENDA_ID){
+            const agendaChannel = getAgenda(reaction.message.channel.guild)
+            if(agendaChannel && reaction.message.channel.id === agendaChannel.id){
                 if(reaction._emoji.name == "🔔" && !user.bot){
                     let event = await agendaSchema.findOneAndUpdate(
                         { msgId: reaction.message.id, channelId: reaction.message.channel.id },
                         { $pull: { subscribers: user.id  } },
                         { useFindAndModify: false, new: true }
                     )
-                    const embed = new MessageEmbed().setTitle('Désabonnement de l\'événement "'+ event.name +'" pris en compte').setDescription('Tu ne receveras plus aucun rappel par message privé pour cet événement.').setAuthor('🔔 Notifications xBot').setColor('#6d99d3')
-                    reaction.message.guild.members.cache.find(member => member.id === user.id).send(embed)
+                    if (event) {
+                        const embed = new MessageEmbed().setTitle('Désabonnement de l\'événement "'+ event.name +'" pris en compte').setDescription('Tu ne receveras plus aucun rappel par message privé pour cet événement.').setAuthor('🔔 Notifications xBot').setColor('#6d99d3')
+                        reaction.message.guild.members.cache.find(member => member.id === user.id).send(embed)
+                    }
                 }
             }
         })
     },
     callback: async ({ channel, options, subcommands }) => {
+        const agendaChannel = getAgenda(channel.guild)
+        if (!agendaChannel)
+            return "Aucun salon xBot agenda n'existe sur ce serveur. Créé-le ou demande à un administrateur de le créer. Le nom du salon doit être le suivant :```📅-agenda```"
         if (subcommands[0] === "ajouter") {
             if ( ([1,3,5,7,8,10,12].indexOf(options.mois) != -1 && options.jour > 31)
                 || ([4,6,9,11].indexOf(options.mois) != -1 && options.jour > 30)
@@ -280,19 +296,19 @@ module.exports.agenda = {
 
             const datedb = new Date(options.annee + '-' + ("0" + options.mois).slice(-2) + '-' + ("0" + options.jour).slice(-2) + 'T' + (options.heure ? (("0" + options.minute).slice(-2) ? ("0" + options.heure).slice(-2) + ':' + ("0" + options.minute).slice(-2) : ("0" + options.heure).slice(-2) + ':00') + ':00' : '00:00:00'))
 
-            channel.guild.channels.cache.get(process.env.AGENDA_ID).send(embed).then(sentEmbed => {
+            agendaChannel.send(embed).then(sentEmbed => {
                 sentEmbed.react('🔔')
                 new agendaSchema({
                     date: datedb.valueOf(),
                     msgId: sentEmbed.id,
-                    channelId: process.env.AGENDA_ID,
+                    channelId: agendaChannel.id,
                     guildId: channel.guild.id,
                     name: nom,
                     description: description
                 }).save()
             })
 
-            return 'L\'événement a bien été ajouté dans <#' + process.env.AGENDA_ID + '>. Tu peux t\'abonner aux rappels en cliquant sur :bell: sous l\'événement.'
+            return 'L\'événement a bien été ajouté dans <#' + agendaChannel.id + '>. Tu peux t\'abonner aux rappels en cliquant sur :bell: sous l\'événement.'
         } else if (subcommands[0] === "supprimer") {
             if ("nom" in options && !("id_message" in options)) {
                 const events = await agendaSchema.find({
@@ -303,9 +319,9 @@ module.exports.agenda = {
                     let success = false
                     await agendaSchema.deleteOne({msgId: event.msgId}).then(() => {
                         success = true
-                        channel.guild.channels.cache.get(process.env.AGENDA_ID).messages.fetch(event.msgId).then(message => message.delete())
+                        agendaChannel.messages.fetch(event.msgId).then(message => message.delete())
                     })
-                    return success ? 'L\'événement a bien été supprimé de <#' + process.env.AGENDA_ID + '>.' : 'Erreur lors de la suppression'
+                    return success ? 'L\'événement a bien été supprimé de <#' + agendaChannel.id + '>.' : 'Erreur lors de la suppression'
                 } else if(events.length === 0) {
                     return 'Aucun événement trouvé avec ce nom.'
                 } else {
@@ -315,9 +331,9 @@ module.exports.agenda = {
                 let success = false
                 await agendaSchema.deleteOne({msgId: options.id_message}).then(() => {
                     success = true
-                    channel.guild.channels.cache.get(process.env.AGENDA_ID).messages.fetch(options.id_message).then(message => message.delete())
+                    agendaChannel.messages.fetch(options.id_message).then(message => message.delete())
                 })
-                return success ? 'L\'événement a bien été supprimé de <#' + process.env.AGENDA_ID + '>.' : 'Erreur lors de la suppression'
+                return success ? 'L\'événement a bien été supprimé de <#' + agendaChannel.id + '>.' : 'Erreur lors de la suppression'
             } else {
                 return 'Merci de renseigner un des deux paramètres.'
             }

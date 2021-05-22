@@ -25,12 +25,17 @@ const getApp = (guildId) => {
 }
 
 client.once('ready', () => {
-    client.user.setActivity("yBot galérer", { type: "WATCHING"})
+    client.user.setActivity("I, Robot", { type: "WATCHING"})
 
     //caching AGENDA channel for reaction listener & MEMBERS
-    client.channels.cache.get(process.env.AGENDA_ID).messages.fetch()
     guildId.forEach((guild) => {
         client.guilds.cache.get(guild).members.fetch()
+        let agenda = client.guilds.cache.get(guild).channels.cache.find(chan => chan.name === "📅-agenda")
+        if (agenda) {
+            agenda.messages.fetch()
+        } else {
+            console.warn("No channel named \"📅-agenda\" found in guild "+guild)
+        }
     })
 
     //getApp( guildId ).commands('845286888108851250').delete()
@@ -91,9 +96,9 @@ client.on('interaction', async interaction => {
 })
 
 client.on('message', async (message) => {
-    if (message.mentions.users.has(process.env.XBOT_ID)
-        || message.content.indexOf("<@"+process.env.XBOT_ID+">") > -1
-        || message.content.indexOf("<@!"+process.env.XBOT_ID+">") > -1)
+    if (message.mentions.users.has(client.user.id)
+        || message.content.indexOf("<@"+client.user.id+">") > -1
+        || message.content.indexOf("<@!"+client.user.id+">") > -1)
         message.react('👀')
 })
 

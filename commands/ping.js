@@ -17,7 +17,7 @@ module.exports.ping = {
             'QUOI ENCORE ???!!!',
             'Oui ?',
             'On m\'appelle ?',
-            'Je suis en ligne, pas sûr que ce soit encore le cas ' + (process.env.YBOT_ID ? 'de <@' + process.env.YBOT_ID + '>' : 'des autres bots') + '...'
+            'Je suis en ligne, pas sûr que ce soit encore le cas des autres bots...'
         ]
         return randomString[Math.floor(Math.random() * randomString.length)]
     }

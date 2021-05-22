@@ -21,7 +21,8 @@ module.exports.blague = {
             "Un jour une femme a dit à son mari : « Va au supermarché acheter une bouteille de lait. Et tant que t'y es, prends des oeufs. ».\nIl n'est jamais revenu.",
             "Comment appelle-t-on celui qui répare les tablettes Microsoft ?\nUn technicien de surface.",
             "Si Microsoft inventait un truc qui ne plante pas, ce serait un clou.",
-            "Vous ne pouvez pas comprendre la récursivité sans avoir d’abord compris la récursivité."
+            "Vous ne pouvez pas comprendre la récursivité sans avoir d’abord compris la récursivité.",
+            "Les développeurs ne se battent pas, ils C#."
         ]
         return randomString[Math.floor(Math.random() * randomString.length)]
     }
