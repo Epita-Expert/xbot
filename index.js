@@ -26,6 +26,7 @@ const getApp = (guildId) => {
 
 client.once('ready', () => {
     client.user.setActivity("I, Robot", { type: "WATCHING"})
+    //client.user.setPresence({ activity: { name: 'MAINTENANCE EN COURS' }, status: 'dnd' })
 
     //caching AGENDA channel for reaction listener & MEMBERS
     guildId.forEach((guild) => {
@@ -61,9 +62,13 @@ client.once('ready', () => {
         getApp(guild).commands.get().then((allCmds) => {
             allCmds.forEach((e) => {
                 console.log(e.name + " -> " + e.id + " [guildId:" + guild + "]")
-                if (typeof commands[e.name].init === 'function' && !('isInit' in commands[e.name])) {
-                    commands[e.name].init({client:client})
-                    commands[e.name].isInit = true
+                const cmd = commands[e.name]
+                if ("default_permission" in cmd.data && cmd.data.default_permission === false && cmd.permissions) {
+                    //getApp(guild).commands.permissions.setPermissions(e.id, cmd.permissions).then(e => console.log(e))
+                }
+                if (typeof cmd.init === 'function' && !('isInit' in cmd)) {
+                    cmd.init({client:client})
+                    cmd.isInit = true
                 }
             })
         })
@@ -90,7 +95,7 @@ client.on('interaction', async interaction => {
                 }
             }
         }
-        const callback = await commands[interaction.commandName].callback({channel:interaction.channel, options:args, user:interaction.user, subcommands:subcommands})
+        const callback = await commands[interaction.commandName].callback({channel:interaction.channel, options:args, user:interaction.user, subcommands:subcommands, client:client})
         interaction.reply(callback)
     }
 })
