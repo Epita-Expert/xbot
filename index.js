@@ -1,11 +1,20 @@
-const DiscordJS = require('discord.js')
-const WOKCommands = require('wokcommands')
 require('dotenv').config()
 
-const guildId = process.env.SERVER_ID
-const client = new DiscordJS.Client({
-    partials: ['MESSAGE', 'REACTION']
-})
+const { Client, Intents, MessageEmbed } = require('discord.js')
+const glob = require("glob")
+const path = require("path")
+
+let allCommands = {}
+glob.sync( './commands/*.js' ).forEach( file => allCommands = {...allCommands, ...require(path.resolve(file))} )
+
+const commands = allCommands
+const guildId = process.env.SERVER_ID.split(',')
+const client = new Client({ intents: [
+        Intents.FLAGS.GUILDS,
+        Intents.FLAGS.GUILD_MESSAGES,
+        Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
+        Intents.FLAGS.GUILD_MEMBERS
+    ] })
 
 const getApp = (guildId) => {
     const app = client.api.applications(client.user.id)
@@ -15,40 +24,87 @@ const getApp = (guildId) => {
     return app
 }
 
-client.on('ready', () => {
-    client.user.setActivity("carry les experts 2023");
+client.once('ready', () => {
+    client.user.setActivity("I, Robot", { type: "WATCHING"})
+    //client.user.setPresence({ activity: { name: 'MAINTENANCE EN COURS' }, status: 'dnd' })
 
-    new WOKCommands(client, {
-        commandsDir: 'commands',
-        testServers: [guildId],
-        showWarns: false,
+    //caching AGENDA channel for reaction listener & MEMBERS
+    guildId.forEach((guild) => {
+        client.guilds.cache.get(guild).members.fetch()
+        let agenda = client.guilds.cache.get(guild).channels.cache.find(chan => chan.name === "📅-agenda")
+        if (agenda) {
+            agenda.messages.fetch()
+        } else {
+            console.warn("No channel named \"📅-agenda\" found in guild "+guild)
+        }
     })
 
-    getApp(guildId).commands.get().then((allCmds) => {
-        console.log(allCmds)
+    //getApp( guildId ).commands('845286888108851250').delete()
+
+    for (const [name, cmd] of Object.entries(commands)) {
+        if (typeof cmd.data === 'object') {
+            if (cmd.isGlobal) {
+                getApp().commands.post({data: cmd.data}).then(e => console.log(name + " -> Successfully posted [Global command]"))
+            } else {
+                guildId.forEach((guild) => {
+                    getApp(guild).commands.post({data: cmd.data}).then(e => console.log(name + " -> Successfully posted [guildId:" + guild + "]"))
+                })
+            }
+        }
+    }
+
+    getApp().commands.get().then((allCmds) => {
+        allCmds.forEach((e) => {
+            console.log(e.name + " -> " + e.id + " [Global command]")
+        })
+    })
+    guildId.forEach((guild) => {
+        getApp(guild).commands.get().then((allCmds) => {
+            allCmds.forEach((e) => {
+                console.log(e.name + " -> " + e.id + " [guildId:" + guild + "]")
+                const cmd = commands[e.name]
+                if ("default_permission" in cmd.data && cmd.data.default_permission === false && cmd.permissions) {
+                    //getApp(guild).commands.permissions.setPermissions(e.id, cmd.permissions).then(e => console.log(e))
+                }
+                if (typeof cmd.init === 'function' && !('isInit' in cmd)) {
+                    cmd.init({client:client})
+                    cmd.isInit = true
+                }
+            })
+        })
     })
 })
 
-client.on('messageReactionAdd', async (reaction, user) => {
-    if(reaction.message.channel.id === process.env.AGENDA_ID){
-        if(reaction._emoji.name == "🔔" && !user.bot){
-            // save in database here
-            const embed = new DiscordJS.MessageEmbed().setTitle('Abonnement à l\'événement pris en compte').setDescription('Tu receveras un rappel 2 semaines, 1 semaine, 48h et 24h avant l\'événement par message privé.').setAuthor('🔔 Notifications xBot').setColor('#6d99d3')
-            reaction.message.guild.members.cache.find(member => member.id === user.id).send(embed)
-        }else if(reaction._emoji.name != "🔔"){
-            reaction.remove()
+client.on('interaction', async interaction => {
+    if (!interaction.isCommand())
+        return
+
+    if (interaction.commandName in commands) {
+        const args = {}
+        const subcommands = []
+        if (interaction.options.length) {
+            let options = interaction.options
+            while (options && options.length && (options[0].type === "SUB_COMMAND" || options[0].type === "SUB_COMMAND_GROUP")) {
+                subcommands.push(options[0].name)
+                options = options[0].options
+            }
+            if (options) {
+                for (const option of options) {
+                    const {name, value} = option
+                    args[name] = value
+                }
+            }
         }
+        const callback = await commands[interaction.commandName].callback({channel:interaction.channel, options:args, user:interaction.user, subcommands:subcommands, client:client})
+        interaction.reply(callback)
     }
 })
 
-client.on('messageReactionRemove', async (reaction, user) => {
-    if(reaction.message.channel.id === process.env.AGENDA_ID){
-        if(reaction._emoji.name == "🔔" && !user.bot){
-            // save in database here
-            const embed = new DiscordJS.MessageEmbed().setTitle('Désabonnement à l\'événement pris en compte').setDescription('Tu ne receveras plus aucun rappel par message privé pour cet événement.').setAuthor('🔔 Notifications xBot').setColor('#6d99d3')
-            reaction.message.guild.members.cache.find(member => member.id === user.id).send(embed)
-        }
-    }
+client.on('message', async (message) => {
+    if (message.mentions.users.has(client.user.id)
+        || message.content.indexOf("<@"+client.user.id+">") > -1
+        || message.content.indexOf("<@!"+client.user.id+">") > -1)
+        message.react('👀')
 })
 
 client.login(process.env.TOKEN)
