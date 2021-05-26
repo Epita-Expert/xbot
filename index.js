@@ -25,7 +25,7 @@ const getApp = (guildId) => {
 }
 
 client.once('ready', () => {
-    client.user.setActivity("I, Robot", { type: "WATCHING"})
+    client.user.setActivity("Minority Report", { type: "WATCHING"})
     //client.user.setPresence({ activity: { name: 'MAINTENANCE EN COURS' }, status: 'dnd' })
 
     //caching AGENDA channel for reaction listener & MEMBERS

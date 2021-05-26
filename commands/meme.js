@@ -25,7 +25,7 @@ module.exports.meme = {
             subr = '/' + subr
         }
         const { title, url, nsfw, postLink, subreddit } = await fetch('https://meme-api.herokuapp.com/gimme' + subr).then(response => response.json())
-        if (url && (nsfw === false || channel.nsfw)) {
+        if (url && nsfw === false) { //to enable nsfw channel: url && (nsfw === false || channel.nsfw)
             const embed = new MessageEmbed().setURL(postLink).setColor('#6d99d3').setImage(url).setFooter('r/' + subreddit)
             if (title)
                 embed.setTitle(title)
