@@ -18,19 +18,20 @@ module.exports.dit = {
             }
         ]
     },
-    callback: ({ channel, options, user }) => {
+    callback: ({ channel, options, user, client }) => {
         setTimeout(() => {
             let targetChan = options.salon ? channel.guild.channels.cache.get(options.salon) : channel
             console.log(user.username + " (id:" + user.id + ") used the bot to say '" + options.message + "'")
-            channel.messages.fetch({ limit: 1 }).then(messages => {
-                let lastMessage = messages.first()
-                if (lastMessage.author.bot) {
+            channel.messages.fetch({ limit: 10 }).then(messages => {
+                let lastMessage = messages.filter(msg => (msg.author.id === client.user.id && msg.content == 'Suppression en cours...')).first()
+
+                if (lastMessage) {
                     lastMessage.delete().then(() => {
                         targetChan.send(options.message)
                     })
                 }
             })
         }, 75)
-        return '*Ce message est sensé disparaître automatiquement...*'
+        return 'Suppression en cours...'
     }
 }
