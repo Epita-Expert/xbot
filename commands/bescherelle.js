@@ -54,15 +54,24 @@ module.exports.bescherelle = {
             let lastMessage = messages.filter(msg => (msg.author.id === auteur && msg.content)).first()
             if (lastMessage) {
                 const phrase = lastMessage.content.trim()
-                const finalPoint = (phrase.slice(-1) === '.')
+                const lastChar = phrase.slice(-1)
+                const finalPoint = (lastChar === '.' || lastChar === '?' || lastChar === ':' || lastChar === '!')
                 const bescherelle = await fetch('http://localhost:17777/v2/check?language='+lang+'&text=' + encodeURIComponent(phrase)).then(response => response.json())
                 if (bescherelle && "matches" in bescherelle) {
                     if (bescherelle.matches.length) {
                         const embed = new MessageEmbed().setColor('#6d99d3')
+                        let off = 0
                         let correct = phrase
                         bescherelle.matches.forEach((match) => {
-                            embed.addField(correct.slice(match.offset, match.offset + match.length) + " ➡️ **"+match.replacements[0].value+"**", match.message)
-                            correct = correct.slice(0, match.offset) + match.replacements[0].value + correct.slice(match.offset + match.length, correct.length)
+                            if (!match.replacements.length) {
+                                embed.addField('⚠️ "' + correct.slice(match.offset, match.offset + match.length) + '"', match.message)
+                                correct = correct.slice(0, match.offset + off) + "~~" + correct.slice(match.offset + off, match.offset + match.length + off) + "~~" + correct.slice(match.offset + match.length + off, correct.length)
+                                off += 4
+                            } else {
+                                embed.addField(correct.slice(match.offset + off, match.offset + match.length + off) + " ➡️ **"+match.replacements[0].value+"**", match.message)
+                                correct = correct.slice(0, match.offset + off) + match.replacements[0].value + correct.slice(match.offset + match.length + off, correct.length)
+                                off += match.replacements[0].value.length - match.length
+                            }
                         })
                         correct += (finalPoint ? '' : '.')
                         embed.setTitle('"' + correct + '"')
@@ -74,12 +83,12 @@ module.exports.bescherelle = {
                             channel.send(embed)
                         }, 75)
                     } else {
-                        reponse = 'J\'ai déjà vu pire ! Il n\'y a pas de fautes flagrantes dans ce message. 😁' || 'Excepté l\'absence de point final je ne vois rien de choquant.'
+                        reponse = (finalPoint) ? 'J\'ai déjà vu pire ! Il n\'y a pas de fautes flagrantes dans ce message. 😁' : 'Excepté l\'absence de point final je ne vois rien de choquant.'
                     }
                 } else {
                     reponse = 'Vérification orthographique impossible. :('
                 }
-                reponse = '*<@'+ auteur +'> a dit :*\n> '+ phrase +'\n\n' + reponse
+                reponse = 'Analysons le dernier message de <@'+ auteur +'>...\n' + reponse
             } else {
                 reponse = 'Aucun message de cet utilisateur n\'a été trouvé dans les derniers messages.'
             }
