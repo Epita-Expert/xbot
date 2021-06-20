@@ -289,6 +289,7 @@ module.exports.agenda = {
                 || options.jour < 1) {
                 return 'Le jour sélectionné est invalide. Merci de réessayer.'
             }
+            options.minute = options.minute || 0
             if (options.minute >= 60 || options.minute < 0) {
                 return 'Les minutes doivent être entre 0 et 59. Merci de réessayer.'
             }

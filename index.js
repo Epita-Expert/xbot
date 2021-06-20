@@ -65,6 +65,13 @@ client.once('ready', () => {
                 const cmd = commands[e.name]
                 if ("default_permission" in cmd.data && cmd.data.default_permission === false && cmd.permissions) {
                     //getApp(guild).commands.permissions.setPermissions(e.id, cmd.permissions).then(e => console.log(e))
+                    /*client.application.commands.fetch(e.id)
+                        .then((command) => {
+                            console.log(`Fetched command ${command.name}`)
+                            command.setPermissions(cmd.permissions)
+                                .then(console.log)
+                                .catch(console.error)
+                        })*/
                 }
                 if (typeof cmd.init === 'function' && !('isInit' in cmd)) {
                     cmd.init({client:client})

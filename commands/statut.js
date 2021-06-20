@@ -16,7 +16,7 @@ module.exports.statut = {
     permissions:  [
         {
             "id": process.env.SUPERADMIN_ID,
-            "type": 2,
+            "type": 'USER',
             "permission": true
         }
     ],
