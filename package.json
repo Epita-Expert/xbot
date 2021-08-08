@@ -2,7 +2,12 @@
   "name": "xbot",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "app.js",
+  "nodemonConfig": {
+    "ignore": [
+      "commands/*.js"
+    ]
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -10,7 +15,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "discord.js": "github:discordjs/discord.js",
+    "blagues-api": "^2.1.0",
+    "discord.js": "^13.0.1",
     "discord.js-minesweeper": "^1.0.6",
     "dotenv": "^9.0.2",
     "glob": "^7.1.7",

@@ -1,4 +1,4 @@
-module.exports.aleatoire = {
+module.exports = {
     isGlobal: false,
     data: {
         "name": "aleatoire",
@@ -7,23 +7,24 @@ module.exports.aleatoire = {
             {
                 "name": "min",
                 "description": "(Optionnel) Borne minimum - par défaut 0",
-                "type": 4,
+                "type": 'INTEGER',
                 "required": false
             },
             {
                 "name": "max",
                 "description": "(Optionnel) Borne maximum - par défaut 1",
-                "type": 4,
+                "type": 'INTEGER',
                 "required": false
             }
         ]
     },
-    callback: ({ channel, options, user }) => {
-        const min = options.min || 0
-        const max = options.max || 1
+    execute: async ({ options, interaction }) => {
+        const min = options.getInteger('min') || 0
+        const max = options.getInteger('max') || 1
         if (max <= 0 || min >= max || min < 0){
-            return 'Conflit dans les bornes minimum/maximum. Merci de réessayer.'
+            await interaction.reply({ content: 'Conflit dans les bornes minimum/maximum. Merci de réessayer.', ephemeral: true })
+            return
         }
-        return Math.floor(Math.random() * (max - min + 1) + min)
+        await interaction.reply({ content: Math.floor(Math.random() * (max - min + 1) + min).toString() })
     }
 }

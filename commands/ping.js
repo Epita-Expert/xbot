@@ -1,11 +1,11 @@
-module.exports.ping = {
+module.exports = {
     isGlobal: false,
     data: {
         "name": "ping",
         "description": "Ping le meilleur des bots du serveur !",
         "options": []
     },
-    callback: ({ channel, options }) => {
+    execute: async ({ interaction }) => {
         randomString = [
             'Attention ! Ce bot est développé par un Expert, ne faîtes pas ça chez vous.',
             'J\'suis là...',
@@ -19,6 +19,6 @@ module.exports.ping = {
             'On m\'appelle ?',
             'Je suis en ligne, pas sûr que ce soit encore le cas des autres bots...'
         ]
-        return randomString[Math.floor(Math.random() * randomString.length)]
+        await interaction.reply({ content: randomString[Math.floor(Math.random() * randomString.length)]})
     }
 }

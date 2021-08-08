@@ -1,37 +1,29 @@
-module.exports.dit = {
+module.exports = {
     isGlobal: false,
     data: {
-        "name": "dit",
-        "description": "Fait parler le bot à ta place dans ce salon ou ailleurs",
-        "options": [
+        name: "dit",
+        description: "Fait parler le bot à ta place dans ce salon ou ailleurs",
+        options: [
             {
                 "name": "message",
                 "description": "Le message que le bot enverra anonymement à ta place",
-                "type": 3,
+                "type": 'STRING',
                 "required": true
             },
             {
                 "name": "salon",
                 "description": "(Optionnel) Choisis un salon où envoyer ton message, par défaut dans le salon actuel",
-                "type": 7,
+                "type": 'CHANNEL',
                 "required": false
             }
-        ]
+        ],
     },
-    callback: ({ channel, options, user, client }) => {
-        setTimeout(() => {
-            let targetChan = options.salon ? channel.guild.channels.cache.get(options.salon) : channel
-            console.log(user.username + " (id:" + user.id + ") used the bot to say '" + options.message + "'")
-            channel.messages.fetch({ limit: 10 }).then(messages => {
-                let lastMessage = messages.filter(msg => (msg.author.id === client.user.id && msg.content == 'Suppression en cours...')).first()
-
-                if (lastMessage) {
-                    lastMessage.delete().then(() => {
-                        targetChan.send(options.message)
-                    })
-                }
-            })
-        }, 75)
-        return 'Suppression en cours...'
+    execute: async ({ options, channel, user, client, interaction }) => {
+        let message = options.getString('message')
+        let salon = options.getChannel('salon')
+        let targetChan = salon ? salon : channel
+        targetChan.send(message)
+        console.log(user.username + " (id:" + user.id + ") used the bot to say '" + message + "' (in:" + targetChan.id + ")")
+        await interaction.reply({ content: 'Tu as utilisé le bot pour dire : "' + ( message.length > 32 ? `${message.substring(0, 32)}...` : message ) + '" dans <#' + targetChan.id + '>.', ephemeral: true })
     }
 }

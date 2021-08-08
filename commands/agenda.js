@@ -19,7 +19,7 @@ const getAgenda = (guild) => {
     return guild.channels.cache.find(chan => chan.name === "📅-agenda")
 }
 
-module.exports.agenda = {
+module.exports = {
     isGlobal: false,
     data: {
         "name": "agenda",
@@ -28,30 +28,30 @@ module.exports.agenda = {
             {
                 "name": "ajouter",
                 "description": "Ajoute un événement",
-                "type": 1,
+                "type": 'SUB_COMMAND',
                 "options": [
                     {
                         "name": "nom",
                         "description": "Nom de l'événement",
-                        "type": 3,
+                        "type": 'STRING',
                         "required": true
                     },
                     {
                         "name": "description",
                         "description": "Description de l'événement",
-                        "type": 3,
+                        "type": 'STRING',
                         "required": true
                     },
                     {
                         "name": "jour",
                         "description": "Jour de l'événement (format JJ)",
-                        "type": 4,
+                        "type": 'INTEGER',
                         "required": true
                     },
                     {
                         "name": "mois",
                         "description": "Mois de l'événement",
-                        "type": 4,
+                        "type": 'INTEGER',
                         "required": true,
                         "choices": [
                             {
@@ -107,21 +107,21 @@ module.exports.agenda = {
                     {
                         "name": "annee",
                         "description": "Année de l'événement",
-                        "type": 4,
+                        "type": 'INTEGER',
                         "required": true,
                         "choices": annee
                     },
                     {
                         "name": "heure",
                         "description": "(Optionnel) Heure de l'événement",
-                        "type": 4,
+                        "type": 'INTEGER',
                         "required": false,
                         "choices": heure
                     },
                     {
                         "name": "minute",
                         "description": "(Optionnel) Minute de l'événement",
-                        "type": 4,
+                        "type": 'INTEGER',
                         "required": false
                     }
                 ]
@@ -129,18 +129,18 @@ module.exports.agenda = {
             {
                 "name": "supprimer",
                 "description": "Supprime un événement (Spécifier un des deux paramètres)",
-                "type": 1,
+                "type": 'SUB_COMMAND',
                 "options": [
                     {
                         "name": "nom",
                         "description": "Nom de l'événement",
-                        "type": 3,
+                        "type": 'STRING',
                         "required": false
                     },
                     {
                         "name": "id_message",
                         "description": "Identifiant du message de l'événement (le paramètre 'nom' sera ignoré mais doit être renseigné)",
-                        "type": 3,
+                        "type": 'STRING',
                         "required": false
                     }
                 ]
@@ -148,7 +148,7 @@ module.exports.agenda = {
             {
                 "name": "liste",
                 "description": "Affiche une liste des événements à venir dans le salon actuel",
-                "type": 1,
+                "type": 'SUB_COMMAND',
                 "options": []
             }
         ]
@@ -213,7 +213,7 @@ module.exports.agenda = {
                         if (discordUser) {
                             const embed = new MessageEmbed().setTitle("\""+event.name+"\" dans "+name+" - "+date.toLocaleDateString('fr-FR')+temps).setDescription(event.description || "Aucune description de l'événement").setAuthor('🔔 RAPPEL').setColor('#6d99d3')
                             embed.setFooter('🔔 Clique sur la cloche sous cet événement dans le salon agenda pour ne plus recevoir de rappels par message privé.')
-                            discordUser.send(embed)
+                            discordUser.send({embeds: [embed]})
                             ++userSent
                         }
                     })
@@ -252,7 +252,7 @@ module.exports.agenda = {
                         } else {
                             embed = new MessageEmbed().setTitle('Abonnement à l\'événement "'+ event.name +'" pris en compte').setDescription('Tu receveras un rappel 2 semaines, 1 semaine, 48h et 24h avant l\'événement par message privé.').setAuthor('🔔 Notifications xBot').setColor('#6d99d3')
                         }
-                        reaction.message.guild.members.cache.find(member => member.id === user.id).send(embed)
+                        reaction.message.guild.members.cache.find(member => member.id === user.id).send({embeds: [embed]})
                     } else {
                         reaction.remove()
                     }
@@ -272,40 +272,49 @@ module.exports.agenda = {
                     if (event) {
                         console.log(user.username + ' unsubscribe from "' + event.name + '"')
                         const embed = new MessageEmbed().setTitle('Désabonnement de l\'événement "'+ event.name +'" pris en compte').setDescription('Tu ne receveras plus aucun rappel par message privé pour cet événement.').setAuthor('🔔 Notifications xBot').setColor('#6d99d3')
-                        reaction.message.guild.members.cache.find(member => member.id === user.id).send(embed)
+                        reaction.message.guild.members.cache.find(member => member.id === user.id).send({embeds: [embed]})
                     }
                 }
             }
         })
     },
-    callback: async ({ channel, options, subcommands }) => {
+    execute: async ({ interaction, channel, options }) => {
         const agendaChannel = getAgenda(channel.guild)
-        if (!agendaChannel)
-            return "Aucun salon xBot agenda n'existe sur ce serveur. Créé-le ou demande à un administrateur de le créer. Le nom du salon doit être le suivant :```📅-agenda```"
-        if (subcommands[0] === "ajouter") {
-            if ( ([1,3,5,7,8,10,12].indexOf(options.mois) != -1 && options.jour > 31)
-                || ([4,6,9,11].indexOf(options.mois) != -1 && options.jour > 30)
-                || (options.mois === 2 && options.jour > 29)
-                || options.jour < 1) {
-                return 'Le jour sélectionné est invalide. Merci de réessayer.'
+        if (!agendaChannel) {
+            await interaction.reply({content: "Aucun salon xBot agenda n'existe sur ce serveur. Créé-le ou demande à un administrateur de le créer. Le nom du salon doit être le suivant :```📅-agenda```", ephemeral: true})
+            return
+        }
+        if (options.getSubcommand() === "ajouter") {
+            let opt_annee = options.getInteger('annee')
+            let opt_mois = options.getInteger('mois')
+            let opt_jour = options.getInteger('jour')
+            let opt_heure = options.getInteger('heure')
+            let opt_minute = options.getInteger('minute')
+            if ( ([1,3,5,7,8,10,12].indexOf(opt_mois) != -1 && opt_jour > 31)
+                || ([4,6,9,11].indexOf(opt_mois) != -1 && opt_jour > 30)
+                || (opt_mois === 2 && opt_jour > 29)
+                || opt_jour < 1) {
+                await interaction.reply({content: 'Le jour sélectionné est invalide. Merci de réessayer.', ephemeral: true})
+                return
             }
-            options.minute = options.minute || 0
-            if (options.minute >= 60 || options.minute < 0) {
-                return 'Les minutes doivent être entre 0 et 59. Merci de réessayer.'
+            opt_minute = opt_minute || 0
+            if (opt_minute >= 60 || opt_minute < 0) {
+                await interaction.reply({content: 'Les minutes doivent être entre 0 et 59. Merci de réessayer.', ephemeral: true})
+                return
             }
 
-            const date = ("0" + options.jour).slice(-2) + '/' + ("0" + options.mois).slice(-2) + '/' + options.annee
-            const heure = options.heure ? ' à ' + (("0" + options.minute).slice(-2) ? ("0" + options.heure).slice(-2) + ':' + ("0" + options.minute).slice(-2) : ("0" + options.heure).slice(-2) + 'h') + ' ' : ''
-            const nom = options.nom
-            const description = options.description
+            const date = ("0" + opt_jour).slice(-2) + '/' + ("0" + opt_mois).slice(-2) + '/' + opt_annee
+            const heure = opt_heure ? ' à ' + (("0" + opt_minute).slice(-2) ? ("0" + opt_heure).slice(-2) + ':' + ("0" + opt_minute).slice(-2) : ("0" + opt_heure).slice(-2) + 'h') + ' ' : ''
+            const nom = options.getString('nom')
+            const description = options.getString('description')
 
             const embed = new MessageEmbed().setTitle(date + heure + ' - ' + nom).setDescription(description).setAuthor('📅 À venir').setColor('#6d99d3')
 
             embed.setFooter('🔔 Clique sur la cloche pour recevoir un rappel 2 semaines, 1 semaine, 48h et 24h avant l\'événement par message privé.')
 
-            const datedb = new Date(options.annee + '-' + ("0" + options.mois).slice(-2) + '-' + ("0" + options.jour).slice(-2) + 'T' + (options.heure ? (("0" + options.minute).slice(-2) ? ("0" + options.heure).slice(-2) + ':' + ("0" + options.minute).slice(-2) : ("0" + options.heure).slice(-2) + ':00') + ':00' : '00:00:00'))
+            const datedb = new Date(opt_annee + '-' + ("0" + opt_mois).slice(-2) + '-' + ("0" + opt_jour).slice(-2) + 'T' + (opt_heure ? (("0" + opt_minute).slice(-2) ? ("0" + opt_heure).slice(-2) + ':' + ("0" + opt_minute).slice(-2) : ("0" + opt_heure).slice(-2) + ':00') + ':00' : '00:00:00'))
 
-            agendaChannel.send(embed).then(sentEmbed => {
+            agendaChannel.send({embeds: [embed]}).then(sentEmbed => {
                 sentEmbed.react('🔔')
                 new agendaSchema({
                     date: datedb.valueOf(),
@@ -317,11 +326,12 @@ module.exports.agenda = {
                 }).save()
             })
 
-            return 'L\'événement a bien été ajouté dans <#' + agendaChannel.id + '>. Tu peux t\'abonner aux rappels en cliquant sur :bell: sous l\'événement.'
-        } else if (subcommands[0] === "supprimer") {
-            if ("nom" in options && !("id_message" in options)) {
+            await interaction.reply({content: 'L\'événement a bien été ajouté dans <#' + agendaChannel.id + '>. Tu peux t\'abonner aux rappels en cliquant sur :bell: sous l\'événement.'})
+            return
+        } else if (options.getSubcommand() === "supprimer") {
+            if (options.getString('nom') && !(options.getString('id_message'))) {
                 const events = await agendaSchema.find({
-                    name: options.nom
+                    name: options.getString('nom')
                 })
                 if (events.length === 1) {
                     const event = events[0]
@@ -330,52 +340,54 @@ module.exports.agenda = {
                         success = true
                         agendaChannel.messages.fetch(event.msgId).then(message => message.delete())
                     })
-                    return success ? 'L\'événement a bien été supprimé de <#' + agendaChannel.id + '>.' : 'Erreur lors de la suppression'
+                    await interaction.reply({content: (success ? 'L\'événement a bien été supprimé de <#' + agendaChannel.id + '>.' : 'Erreur lors de la suppression')})
+                    return
                 } else if(events.length === 0) {
-                    return 'Aucun événement trouvé avec ce nom.'
+                    await interaction.reply({content: 'Aucun événement trouvé avec ce nom.', ephemeral: true})
+                    return
                 } else {
-                    return 'Le nom de cet événement est ambigu, merci de préciser l\'identifiant du message à la place.'
+                    await interaction.reply({content: 'Le nom de cet événement est ambigu, merci de préciser l\'identifiant du message à la place.', ephemeral: true})
+                    return
                 }
-            } else if ("id_message" in options) {
+            } else if (options.getString('id_message')) {
                 let success = false
-                await agendaSchema.deleteOne({msgId: options.id_message}).then(() => {
+                const id_msg = options.getString('id_message')
+                await agendaSchema.deleteOne({msgId: id_msg}).then(() => {
                     success = true
-                    agendaChannel.messages.fetch(options.id_message).then(message => message.delete())
+                    agendaChannel.messages.fetch(id_msg).then(message => message.delete())
                 })
-                return success ? 'L\'événement a bien été supprimé de <#' + agendaChannel.id + '>.' : 'Erreur lors de la suppression'
+                await interaction.reply({content: (success ? 'L\'événement a bien été supprimé de <#' + agendaChannel.id + '>.' : 'Erreur lors de la suppression')})
+                return
             } else {
-                return 'Merci de renseigner un des deux paramètres.'
+                await interaction.reply({content: 'Merci de renseigner un des deux paramètres.', ephemeral: true})
+                return
             }
-        } else if (subcommands[0] === "liste") {
+        } else if (options.getSubcommand() === "liste") {
             const dateNow = new Date()
             await agendaSchema.find({
                 date: {
                     $gt: dateNow.valueOf()
                 },
                 guildId: channel.guild.id
-            }).sort({date: 'asc'}).exec((err, events) => {
+            }).sort({date: 'asc'}).exec( async (err, events) => {
                 if (err) {
-                    return
+                    throw 'erreur lors de la récupération des données de l\'agenda'
                 }
-                setTimeout(() => {
-                    const embed = new MessageEmbed().setTitle('Résumé des événements').setAuthor('📅 À venir').setColor('#6d99d3')
-                    if (events.length) {
-                        events.forEach((e) => {
-                            const date = e.date
-                            const [heure, minute, seconde] = date.toLocaleTimeString('fr-FR').split(':')
-                            const temps = parseInt(heure, 10) ? ' à ' + (parseInt(minute, 10) ? heure + ':' + minute : heure + 'h') + ' ' : ''
-                            embed.addField(date.toLocaleDateString('fr-FR')+temps + ' - ' + e.name, e.description || '-')
-                        })
-                    } else {
-                        embed.setDescription('Aucun événement à venir.')
-                    }
-                    channel.send(embed)
-                }, 75)
+                const embed = new MessageEmbed().setTitle('Résumé des événements').setAuthor('📅 À venir').setColor('#6d99d3')
+                if (events.length) {
+                    events.forEach((e) => {
+                        const date = e.date
+                        const [heure, minute, seconde] = date.toLocaleTimeString('fr-FR').split(':')
+                        const temps = parseInt(heure, 10) ? ' à ' + (parseInt(minute, 10) ? heure + ':' + minute : heure + 'h') + ' ' : ''
+                        embed.addField(date.toLocaleDateString('fr-FR')+temps + ' - ' + e.name, e.description || '-')
+                    })
+                } else {
+                    embed.setDescription('Aucun événement à venir.')
+                }
+                await interaction.reply({content: (channel.id === agendaChannel.id ? 'Explore ce salon pour voir le détail des événements et t\'abonner aux rappels.' : 'Explore <#' + agendaChannel.id + '> pour voir le détail des événements et t\'abonner aux rappels.'), embeds: [embed]})
             })
-            return channel.id === agendaChannel.id ? 'Explore ce salon pour voir le détail des événements et t\'abonner aux rappels.' : 'Explore <#' + agendaChannel.id + '> pour voir le détail des événements et t\'abonner aux rappels.'
-        } else {
-            return 'Erreur lors de l\'exécution de la commande...'
+            return
         }
-
+        throw 'Erreur lors de l\'exécution de la commande agenda'
     }
 }

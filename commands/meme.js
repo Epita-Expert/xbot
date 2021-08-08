@@ -1,7 +1,7 @@
 const fetch = require('node-fetch')
 const { MessageEmbed } = require('discord.js')
 
-module.exports.meme = {
+module.exports = {
     isGlobal: false,
     data: {
         "name": "meme",
@@ -10,13 +10,13 @@ module.exports.meme = {
             {
                 "name": "subreddit",
                 "description": "Le nom du subreddit où récupérer le meme (sans le 'r/')",
-                "type": 3,
+                "type": 'STRING',
                 "required": false
             }
         ]
     },
-    callback: async ({ channel, options }) => {
-        let subr = options.subreddit || 'memes'
+    execute: async ({ channel, options, interaction }) => {
+        let subr = options.getString('subreddit') || 'memes'
         if (subr) {
             const regex = /([a-zA-Z0-9-_]*)/g
             if(!subr.match(regex)) {
@@ -29,11 +29,14 @@ module.exports.meme = {
             const embed = new MessageEmbed().setURL(postLink).setColor('#6d99d3').setImage(url).setFooter('r/' + subreddit)
             if (title)
                 embed.setTitle(title)
-            return embed
+            await interaction.reply({ embeds: [embed] })
+            const message = await interaction.fetchReply()
+            message.react('⬆️')
+            message.react('⬇️')
         } else if(url && nsfw === true){
-            return "Nope, pas de ça ici... 😏"
+            await interaction.reply({ content: "Nope, pas de ça ici... 😏" })
         } else {
-            return "Je n'ai trouvé aucun meme... 😔"
+            await interaction.reply({ content: "Je n'ai trouvé aucun meme... 😔" })
         }
     }
 }
