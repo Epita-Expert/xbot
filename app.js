@@ -44,6 +44,9 @@ client.once('ready', () => {
             }
         } else {
             approvedGuilds.forEach( async guild => {
+                if ("guilds" in cmd && cmd.guilds.indexOf(guild) === -1) {
+                    return;
+                }
                 command = await client.guilds.cache.get(guild)?.commands.create(cmd.data)
                 if ("permissions" in cmd.data) {
                     await command.permissions.set({ permissions : cmd.data.permissions })
@@ -53,7 +56,7 @@ client.once('ready', () => {
         if (typeof cmd.init === 'function') {
             cmd.init({client:client})
         }
-        console.log('"' + cmd.data.name + '" is ready! ('+(cmd.isGlobal?'globally: all guilds':('locally: '+approvedGuilds.join(",")))+')')
+        console.log('"' + cmd.data.name + '" is ready! ('+(cmd.isGlobal?'globally: all guilds':('locally: '+("guilds" in cmd ? cmd.guilds.join(",") : approvedGuilds.join(","))))+')')
     });
 
     //caching AGENDA channel for reaction listener & MEMBERS

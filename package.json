@@ -16,10 +16,12 @@
   "license": "ISC",
   "dependencies": {
     "blagues-api": "^2.1.0",
+    "capture-website": "^2.0.2",
     "discord.js": "^13.0.1",
     "discord.js-minesweeper": "^1.0.6",
     "dotenv": "^9.0.2",
     "glob": "^7.1.7",
+    "moment": "^2.29.1",
     "mongoose": "^5.12.10",
     "node-fetch": "^2.6.1",
     "path": "^0.12.7",
