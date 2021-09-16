@@ -17,7 +17,7 @@
   "dependencies": {
     "blagues-api": "^2.1.0",
     "capture-website": "^2.0.2",
-    "discord.js": "^13.0.1",
+    "discord.js": "^13.1.0",
     "discord.js-minesweeper": "^1.0.6",
     "dotenv": "^9.0.2",
     "glob": "^7.1.7",

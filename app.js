@@ -28,7 +28,7 @@ client.once('ready', () => {
     /*approvedGuilds.forEach( async guild => {
         const command = await client.guilds.cache.get(guild)?.commands.fetch();
         command.forEach(async cmd => {
-            if (cmd.name == "test" || cmd.name == "bescherelle") {
+            if (cmd.name == "Passif agressif") {
                 await client.guilds.cache.get(guild)?.commands.delete(cmd.id);
             }
         })
@@ -38,25 +38,35 @@ client.once('ready', () => {
     client.commands.forEach( async cmd => {
         let command = undefined;
         if (cmd.isGlobal) {
-            command =  await client.application?.commands.create(cmd.data)
-            if ("permissions" in cmd.data) {
-                await command.permissions.set({ permissions : cmd.data.permissions })
+            try {
+                command =  await client.application?.commands.create(cmd.data)
+                if ("permissions" in cmd.data) {
+                    await command.permissions.set({ permissions : cmd.data.permissions })
+                }
+                console.log('[1/1] - "' + cmd.data.name + '" is ready! (globally: all guilds)')
+            } catch (error) {
+                console.error(error);
             }
         } else {
-            approvedGuilds.forEach( async guild => {
+            let j = 1
+            await approvedGuilds.forEach( async guild => {
                 if ("guilds" in cmd && cmd.guilds.indexOf(guild) === -1) {
                     return;
                 }
-                command = await client.guilds.cache.get(guild)?.commands.create(cmd.data)
-                if ("permissions" in cmd.data) {
-                    await command.permissions.set({ permissions : cmd.data.permissions })
+                try {
+                    command = await client.guilds.cache.get(guild)?.commands.create(cmd.data)
+                    if ("permissions" in cmd.data) {
+                        await command.permissions.set({ permissions : cmd.data.permissions })
+                    }
+                    console.log('['+(j++)+'/'+approvedGuilds.length+'] - "' + cmd.data.name + '" is ready! (locally: '+guild+')')
+                } catch (error) {
+                    console.error(error);
                 }
             })
         }
         if (typeof cmd.init === 'function') {
             cmd.init({client:client})
         }
-        console.log('"' + cmd.data.name + '" is ready! ('+(cmd.isGlobal?'globally: all guilds':('locally: '+("guilds" in cmd ? cmd.guilds.join(",") : approvedGuilds.join(","))))+')')
     });
 
     //caching AGENDA channel for reaction listener & MEMBERS
@@ -74,12 +84,18 @@ client.once('ready', () => {
 })
 
 client.on('interactionCreate', async interaction => {
-    if (!interaction.isCommand()) return;
+    const cmdName = interaction.isButton() ? interaction.message.interaction.commandName : interaction.commandName
 
-    if (!client.commands.has(interaction.commandName)) return;
+    if (!interaction.isCommand() && !interaction.isButton() && !interaction.isContextMenu()) return;
+
+    if (!client.commands.has(cmdName)) return;
 
     try {
-        await client.commands.get(interaction.commandName).execute({options: interaction.options, channel:interaction.channel, user:interaction.user, client:client, interaction:interaction});
+        if (interaction.isButton()) {
+            await client.commands.get(cmdName).callback({user:interaction.member,interaction:interaction, channel:interaction.channel})
+        } else {
+            await client.commands.get(cmdName).execute({options: interaction.options, channel:interaction.channel, user:interaction.user, client:client, interaction:interaction});
+        }
     } catch (error) {
         console.error(error);
         await interaction.reply({ content: 'Une erreur est survenue lors de l\'exécution de cette commande !', ephemeral: true });

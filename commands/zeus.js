@@ -15,7 +15,7 @@ module.exports = {
     guilds: ["761233808645029888","760082078406148136"],
     data: {
         "name": "zeus",
-        "description": "Affiche l'agenda des cours de l'EPITA",
+        "description": "[DEPRECATED SOON] - Affiche l'agenda des cours de l'EPITA",
         "options": [
             {
                 "name": "format",

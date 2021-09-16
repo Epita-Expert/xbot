@@ -29,7 +29,7 @@ module.exports = {
                         },
                         {
                             "name": "Zeus (3ie)",
-                            "value": "Plateforme d'emploi du temps.\nhttps://zeus.3ie.fr/home"
+                            "value": "Plateforme d'emploi du temps.\nhttps://zeus.ionis-it.com/home"
                         },
                         {
                             "name": "Epimap",
