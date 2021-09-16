@@ -28,7 +28,7 @@ client.once('ready', () => {
     /*approvedGuilds.forEach( async guild => {
         const command = await client.guilds.cache.get(guild)?.commands.fetch();
         command.forEach(async cmd => {
-            if (cmd.name == "Passif agressif") {
+            if (cmd.name == "shifumi") {
                 await client.guilds.cache.get(guild)?.commands.delete(cmd.id);
             }
         })
@@ -88,7 +88,7 @@ client.on('interactionCreate', async interaction => {
 
     if (!interaction.isCommand() && !interaction.isButton() && !interaction.isContextMenu()) return;
 
-    if (!client.commands.has(cmdName)) return;
+    if (!client.commands.has(cmdName) || (interaction.isButton() && !(typeof client.commands.get(cmdName).callback === 'function'))) return;
 
     try {
         if (interaction.isButton()) {
