@@ -28,7 +28,7 @@ client.once('ready', () => {
     /*approvedGuilds.forEach( async guild => {
         const command = await client.guilds.cache.get(guild)?.commands.fetch();
         command.forEach(async cmd => {
-            if (cmd.name == "shifumi") {
+            if (cmd.name == "zeus") {
                 await client.guilds.cache.get(guild)?.commands.delete(cmd.id);
             }
         })
