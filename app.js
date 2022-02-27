@@ -1,6 +1,13 @@
 const config = require('dotenv').config().parsed
 const fs = require('fs')
 const { Client, Collection, Intents } = require('discord.js')
+const http = require('http');
+
+http.createServer(function (req, res) {
+    res.writeHead(200, {'Content-Type': 'text/plain'});
+    res.write('Server is up!');
+    res.end();
+}).listen(8080);
 
 
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_MESSAGE_REACTIONS, Intents.FLAGS.GUILD_MEMBERS] })
