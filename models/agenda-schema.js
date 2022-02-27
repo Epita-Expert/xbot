@@ -1,6 +1,6 @@
 const mongoose = require('mongoose')
 
-mongoose.connect('mongodb://'+process.env.DB_USER+':'+process.env.DB_PWD+'@localhost:18888/xbot', {useNewUrlParser: true, useUnifiedTopology: true})
+mongoose.connect('mongodb://'+process.env.DB_USER+':'+process.env.DB_PWD+'@'process.env.DB_URL':18888/xbot?authSource=admin', {useNewUrlParser: true, useUnifiedTopology: true})
 db = mongoose.connection
 db.on('error', console.error.bind(console, 'connection error:'))
 db.once('open', () => console.log("MongoDB successfully connected") )
