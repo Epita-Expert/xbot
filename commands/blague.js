@@ -1,5 +1,4 @@
 const BlaguesAPI = require('blagues-api')
-const config = require('dotenv').config().parsed
 
 module.exports = {
     isGlobal: false,
@@ -39,7 +38,7 @@ module.exports = {
     },
     execute: async ({ options, interaction }) => {
         const type = options.getString('type')
-        const blagues = new BlaguesAPI(config.BLAGUES_TOKEN)
+        const blagues = new BlaguesAPI(process.env.BLAGUES_TOKEN)
         const json = await blagues.randomCategorized(type?blagues.categories[type]:blagues.categories.DEV)
         await interaction.reply({ content: "**"+json.joke + "**" + (json.answer?"\n"+json.answer:"") })
     }
