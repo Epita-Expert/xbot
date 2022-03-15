@@ -15,6 +15,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@sequelize/core": "^7.0.0-alpha.10",
     "blagues-api": "^2.1.0",
     "capture-website": "^2.0.2",
     "discord.js": "^13.1.0",
@@ -23,8 +24,10 @@
     "glob": "^7.1.7",
     "moment": "^2.29.1",
     "mongoose": "^5.12.10",
+    "mysql2": "^2.3.3",
     "node-fetch": "^2.6.1",
     "path": "^0.12.7",
-    "pipotron": "^1.2.5"
+    "pipotron": "^1.2.5",
+    "sequelize": "^6.17.0"
   }
 }

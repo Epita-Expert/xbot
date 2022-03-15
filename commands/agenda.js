@@ -1,6 +1,7 @@
 const { MessageEmbed } = require('discord.js')
 
-const agendaSchema = require('../models/agenda-schema')
+const { initDatabase, agendaSchema } = require('../models/agenda-schema')
+const { Op } = require('@sequelize/core')
 
 const annee = []
 let d = new Date()
@@ -153,7 +154,10 @@ module.exports = {
             }
         ]
     },
-    init: ({ client }) => {
+    init: async ({ client }) => {
+
+        await initDatabase();
+
         const verifNotifs = async () => {
             const date14 = new Date()
             date14.setDate(date14.getDate() + 14)
@@ -166,32 +170,56 @@ module.exports = {
             const dateNow = new Date()
 
             const query14 = {
-                date: {
-                    $lte: date14.valueOf(),
-                    $gt: date7.valueOf()
-                },
-                'send.0': false
+                [Op.and]: [
+                    {
+                        date: {
+                            [Op.lte]: date14.valueOf(),
+                            [Op.gt]: date7.valueOf()
+                        }
+                    },
+                    {
+                        send14: false
+                    }
+                ]
             }
             const query7 = {
-                date: {
-                    $lte: date7.valueOf(),
-                    $gt: date2.valueOf()
-                },
-                'send.1': false
+                [Op.and]: [
+                    {
+                        date: {
+                            [Op.lte]: date7.valueOf(),
+                            [Op.gt]: date2.valueOf()
+                        }
+                    },
+                    {
+                        send7: false
+                    }
+                ]
             }
             const query2 = {
-                date: {
-                    $lte: date2.valueOf(),
-                    $gt: date1.valueOf()
-                },
-                'send.2': false
+                [Op.and]: [
+                    {
+                        date: {
+                            [Op.lte]: date2.valueOf(),
+                            [Op.gt]: date1.valueOf()
+                        }
+                    },
+                    {
+                        send2: false
+                    }
+                ]
             }
             const query1 = {
-                date: {
-                    $lte: date1.valueOf(),
-                    $gt: dateNow.valueOf()
-                },
-                'send.3': false
+                [Op.and]: [
+                    {
+                        date: {
+                            [Op.lte]: date1.valueOf(),
+                            [Op.gt]: dateNow.valueOf()
+                        }
+                    },
+                    {
+                        send1: false
+                    }
+                ]
             }
             const queries = {
                 "2 semaines": query14,
@@ -200,14 +228,16 @@ module.exports = {
                 "24h": query1
             }
             let index = 0
+            let days = ['send14','send7','send2','send1']
             for (const [name, query] of Object.entries(queries)) {
-                const events = await agendaSchema.find(query)
+                const events = await agendaSchema.findAll({where:query})
                 for (const event of events) {
                     let userSent = 0
                     const date = event.date
                     const [heure, minute, seconde] = date.toLocaleTimeString('fr-FR').split(':')
                     const temps = parseInt(heure, 10) ? ' à ' + (parseInt(minute, 10) ? heure + ':' + minute : heure + 'h') + ' ' : ''
-                    event.subscribers.forEach(async (user) => {
+                    let subCount = event.subscribers.filter(e =>  e).length
+                    event.subscribers.filter(e =>  e).forEach(async (user) => {
                         let guildUser = await client.guilds.cache.get(event.guildId)
                         let discordUser = guildUser.members.cache.get(user)
                         if (discordUser) {
@@ -217,13 +247,20 @@ module.exports = {
                             ++userSent
                         }
                     })
-                    let updateField = `send.${index}`
-                    let updatedEvent = await agendaSchema.findOneAndUpdate(
-                        { msgId: event.msgId, channelId: event.channelId },
-                        { [updateField]: true },
-                        { useFindAndModify: false, new: true }
-                    )
-                    console.log("Reminder sent for \""+updatedEvent.name+"\" ("+name+") - " + userSent + "/" + event.subscribers.length)
+                    let updateField = days[index]
+                    await agendaSchema.update({ [updateField]: true }, {
+                        where: {
+                            [Op.and]: [
+                                {
+                                    msgId: event.msgId
+                                },
+                                {
+                                    channelId: event.channelId
+                                }
+                            ]
+                        }
+                    });
+                    console.log("Reminder sent for \""+event.name+"\" ("+name+") - " + userSent + "/" + subCount)
                 }
                 ++index
             }
@@ -238,24 +275,25 @@ module.exports = {
             const agendaChannel = getAgenda(reaction.message.channel.guild)
             if(agendaChannel && reaction.message.channel.id === agendaChannel.id){
                 if(reaction._emoji.name == "🔔" && !user.bot){
-                    let event = await agendaSchema.findOneAndUpdate(
-                        { msgId: reaction.message.id, channelId: reaction.message.channel.id },
-                        { $push: { subscribers: user.id  } },
-                        { useFindAndModify: false, new: true }
-                    )
-                    if (event) {
-                        console.log(user.username + ' subscribe to "' + event.name + '"')
-                        let dateNow = new Date()
-                        let embed = null
-                        if (dateNow > event.date) {
-                            embed = new MessageEmbed().setTitle('Abonnement à l\'événement "'+ event.name +'" pris en compte').setDescription('Attention il semblerait que cet événement est déjà passé, tu ne receveras donc pas de rappels pour celui-ci.').setAuthor('🔔 Notifications xBot').setColor('#6d99d3')
-                        } else {
-                            embed = new MessageEmbed().setTitle('Abonnement à l\'événement "'+ event.name +'" pris en compte').setDescription('Tu receveras un rappel 2 semaines, 1 semaine, 48h et 24h avant l\'événement par message privé.').setAuthor('🔔 Notifications xBot').setColor('#6d99d3')
-                        }
-                        reaction.message.guild.members.cache.find(member => member.id === user.id).send({embeds: [embed]})
-                    } else {
-                        reaction.remove()
-                    }
+                    await agendaSchema.findOne({ where: { msgId: reaction.message.id, channelId: reaction.message.channel.id } }).then(event => {
+                            if (event) {
+                                let subs = [...event.subscribers, user.id].filter(e =>  e)
+                                event.update({
+                                    subscribers: subs
+                                })
+                                console.log(user.username + ' subscribe to "' + event.name + '"')
+                                let dateNow = new Date()
+                                let embed = null
+                                if (dateNow > event.date) {
+                                    embed = new MessageEmbed().setTitle('Abonnement à l\'événement "'+ event.name +'" pris en compte').setDescription('Attention il semblerait que cet événement est déjà passé, tu ne receveras donc pas de rappels pour celui-ci.').setAuthor('🔔 Notifications xBot').setColor('#6d99d3')
+                                } else {
+                                    embed = new MessageEmbed().setTitle('Abonnement à l\'événement "'+ event.name +'" pris en compte').setDescription('Tu receveras un rappel 2 semaines, 1 semaine, 48h et 24h avant l\'événement par message privé.').setAuthor('🔔 Notifications xBot').setColor('#6d99d3')
+                                }
+                                reaction.message.guild.members.cache.find(member => member.id === user.id).send({embeds: [embed]})
+                            } else {
+                                reaction.remove()
+                            }
+                    })
                 }
             }
         })
@@ -264,16 +302,17 @@ module.exports = {
             const agendaChannel = getAgenda(reaction.message.channel.guild)
             if(agendaChannel && reaction.message.channel.id === agendaChannel.id){
                 if(reaction._emoji.name == "🔔" && !user.bot){
-                    let event = await agendaSchema.findOneAndUpdate(
-                        { msgId: reaction.message.id, channelId: reaction.message.channel.id },
-                        { $pull: { subscribers: user.id  } },
-                        { useFindAndModify: false, new: true }
-                    )
-                    if (event) {
-                        console.log(user.username + ' unsubscribe from "' + event.name + '"')
-                        const embed = new MessageEmbed().setTitle('Désabonnement de l\'événement "'+ event.name +'" pris en compte').setDescription('Tu ne receveras plus aucun rappel par message privé pour cet événement.').setAuthor('🔔 Notifications xBot').setColor('#6d99d3')
-                        reaction.message.guild.members.cache.find(member => member.id === user.id).send({embeds: [embed]})
-                    }
+                    await agendaSchema.findOne({ where: { msgId: reaction.message.id, channelId: reaction.message.channel.id } }).then(event => {
+                        if (event) {
+                            let subs = event.subscribers.filter(e => e !== user.id)
+                            event.update({
+                                subscribers: subs
+                            })
+                            console.log(user.username + ' unsubscribe from "' + event.name + '"')
+                            const embed = new MessageEmbed().setTitle('Désabonnement de l\'événement "'+ event.name +'" pris en compte').setDescription('Tu ne receveras plus aucun rappel par message privé pour cet événement.').setAuthor('🔔 Notifications xBot').setColor('#6d99d3')
+                            reaction.message.guild.members.cache.find(member => member.id === user.id).send({embeds: [embed]})
+                        }
+                    })
                 }
             }
         })
@@ -316,27 +355,25 @@ module.exports = {
 
             agendaChannel.send({embeds: [embed]}).then(sentEmbed => {
                 sentEmbed.react('🔔')
-                new agendaSchema({
+                agendaSchema.create({
                     date: datedb.valueOf(),
                     msgId: sentEmbed.id,
                     channelId: agendaChannel.id,
                     guildId: channel.guild.id,
                     name: nom,
                     description: description
-                }).save()
+                })
             })
 
             await interaction.reply({content: 'L\'événement a bien été ajouté dans <#' + agendaChannel.id + '>. Tu peux t\'abonner aux rappels en cliquant sur :bell: sous l\'événement.'})
             return
         } else if (options.getSubcommand() === "supprimer") {
             if (options.getString('nom') && !(options.getString('id_message'))) {
-                const events = await agendaSchema.find({
-                    name: options.getString('nom')
-                })
+                const events = await agendaSchema.findAll({where:{ name: options.getString('nom')}})
                 if (events.length === 1) {
                     const event = events[0]
                     let success = false
-                    await agendaSchema.deleteOne({msgId: event.msgId}).then(() => {
+                    await agendaSchema.destroy({where: {msgId: event.msgId}}).then(() => {
                         success = true
                         agendaChannel.messages.fetch(event.msgId).then(message => message.delete())
                     })
@@ -352,7 +389,7 @@ module.exports = {
             } else if (options.getString('id_message')) {
                 let success = false
                 const id_msg = options.getString('id_message')
-                await agendaSchema.deleteOne({msgId: id_msg}).then(() => {
+                await agendaSchema.destroy({where: {msgId: id_msg}}).then(() => {
                     success = true
                     agendaChannel.messages.fetch(id_msg).then(message => message.delete())
                 })
@@ -364,28 +401,26 @@ module.exports = {
             }
         } else if (options.getSubcommand() === "liste") {
             const dateNow = new Date()
-            await agendaSchema.find({
-                date: {
-                    $gt: dateNow.valueOf()
-                },
-                guildId: channel.guild.id
-            }).sort({date: 'asc'}).exec( async (err, events) => {
-                if (err) {
-                    throw 'erreur lors de la récupération des données de l\'agenda'
-                }
-                const embed = new MessageEmbed().setTitle('Résumé des événements').setAuthor('📅 À venir').setColor('#6d99d3')
-                if (events.length) {
-                    events.forEach((e) => {
-                        const date = e.date
-                        const [heure, minute, seconde] = date.toLocaleTimeString('fr-FR').split(':')
-                        const temps = parseInt(heure, 10) ? ' à ' + (parseInt(minute, 10) ? heure + ':' + minute : heure + 'h') + ' ' : ''
-                        embed.addField(date.toLocaleDateString('fr-FR')+temps + ' - ' + e.name, e.description || '-')
-                    })
-                } else {
-                    embed.setDescription('Aucun événement à venir.')
-                }
-                await interaction.reply({content: (channel.id === agendaChannel.id ? 'Explore ce salon pour voir le détail des événements et t\'abonner aux rappels.' : 'Explore <#' + agendaChannel.id + '> pour voir le détail des événements et t\'abonner aux rappels.'), embeds: [embed]})
+            const events = await agendaSchema.findAll({
+                where:
+                    {
+                        date: {[Op.gt]: dateNow.valueOf()},
+                        guildId: channel.guild.id
+                    },
+                order: [['date', 'ASC']]
             })
+            const embed = new MessageEmbed().setTitle('Résumé des événements').setAuthor('📅 À venir').setColor('#6d99d3')
+            if (events.length) {
+                events.forEach((e) => {
+                    const date = e.date
+                    const [heure, minute, seconde] = date.toLocaleTimeString('fr-FR').split(':')
+                    const temps = parseInt(heure, 10) ? ' à ' + (parseInt(minute, 10) ? heure + ':' + minute : heure + 'h') + ' ' : ''
+                    embed.addField(date.toLocaleDateString('fr-FR')+temps + ' - ' + e.name, e.description || '-')
+                })
+            } else {
+                embed.setDescription('Aucun événement à venir.')
+            }
+            await interaction.reply({content: (channel.id === agendaChannel.id ? 'Explore ce salon pour voir le détail des événements et t\'abonner aux rappels.' : 'Explore <#' + agendaChannel.id + '> pour voir le détail des événements et t\'abonner aux rappels.'), embeds: [embed]})
             return
         }
         throw 'Erreur lors de l\'exécution de la commande agenda'
