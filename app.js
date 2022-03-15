@@ -1,4 +1,3 @@
-const config = require('dotenv').config().parsed
 const fs = require('fs')
 const { Client, Collection, Intents } = require('discord.js')
 const http = require('http');
@@ -12,7 +11,7 @@ http.createServer(function (req, res) {
 
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_MESSAGE_REACTIONS, Intents.FLAGS.GUILD_MEMBERS] })
 client.commands = new Map()
-const approvedGuilds = config.SERVER_ID.split(',')
+const approvedGuilds =  process.env.SERVER_ID.split(',')
 
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'))
 for (const file of commandFiles) {
@@ -117,4 +116,4 @@ client.on('messageCreate', async (message) => {
         message.react('👀')
 })
 
-client.login(config.TOKEN)
+client.login(process.env.TOKEN)
