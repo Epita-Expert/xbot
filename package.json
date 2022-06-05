@@ -6,7 +6,8 @@
   "scripts": {
     "test": "jest --config ./jest.config.js --collectCoverage --coverageDirectory=\"./coverage\" --ci --reporters=default --reporters=jest-junit --watchAll=false",
     "lint": "prettier --check .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "prepare": "husky install"
   },
   "husky": {
     "hooks": {
@@ -36,6 +37,7 @@
     "jest-junit": "^13.2.0",
     "prettier": "2.6.2",
     "serverless": "^3.19.0",
-    "serverless-scaleway-functions": "^0.3.2"
+    "serverless-scaleway-functions": "^0.3.2",
+    "husky": "^8.0.0"
   }
 }

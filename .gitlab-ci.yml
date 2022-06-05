@@ -27,7 +27,7 @@ deploy-with-serverless:
     - npm install -g serverless
     - npm install -g serverless-scaleway-functions
     - serverless deploy
-    
+
 pages:
   only:
     - master
