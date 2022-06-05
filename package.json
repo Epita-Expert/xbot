@@ -3,13 +3,8 @@
   "version": "1.0.0",
   "description": "",
   "main": "app.js",
-  "nodemonConfig": {
-    "ignore": [
-      "commands/*.js"
-    ]
-  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest --config ./jest.config.js --collectCoverage --coverageDirectory=\"./coverage\" --ci --reporters=default --reporters=jest-junit --watchAll=false"
   },
   "keywords": [],
   "author": "",
@@ -27,5 +22,11 @@
     "path": "^0.12.7",
     "pipotron": "^1.2.5",
     "sequelize": "^6.17.0"
+  },
+  "devDependencies": {
+    "jest": "^28.1.0",
+    "jest-junit": "^13.2.0",
+    "serverless": "^3.19.0",
+    "serverless-scaleway-functions": "^0.3.2"
   }
 }
