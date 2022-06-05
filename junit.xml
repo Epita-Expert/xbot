@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="3" failures="1" errors="0" time="0.615">
+  <testsuite name="blague" errors="0" failures="1" skipped="0" timestamp="2022-06-05T13:31:23" time="0.231" tests="2">
+    <testcase classname="blague params verification" name="blague params verification" time="0.002">
+    </testcase>
+    <testcase classname="blague all choices work" name="blague all choices work" time="0">
+      <failure>Error: No token provided
+    at new o (C:\Users\thoma\Documents\discord\srvless-xbot\xbot\node_modules\blagues-api\dist\blagues-api.umd.js:1:2817)
+    at C:\Users\thoma\Documents\discord\srvless-xbot\xbot\test\blague.test.js:14:29
+    at Array.forEach (&lt;anonymous&gt;)
+    at Object.forEach (C:\Users\thoma\Documents\discord\srvless-xbot\xbot\test\blague.test.js:12:68)
+    at Promise.then.completed (C:\Users\thoma\Documents\discord\srvless-xbot\xbot\node_modules\jest-circus\build\utils.js:333:28)
+    at new Promise (&lt;anonymous&gt;)
+    at callAsyncCircusFn (C:\Users\thoma\Documents\discord\srvless-xbot\xbot\node_modules\jest-circus\build\utils.js:259:10)
+    at _callCircusTest (C:\Users\thoma\Documents\discord\srvless-xbot\xbot\node_modules\jest-circus\build\run.js:276:40)
+    at _runTest (C:\Users\thoma\Documents\discord\srvless-xbot\xbot\node_modules\jest-circus\build\run.js:208:3)
+    at _runTestsForDescribeBlock (C:\Users\thoma\Documents\discord\srvless-xbot\xbot\node_modules\jest-circus\build\run.js:96:9)</failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="pierre-papier-ciseaux" errors="0" failures="0" skipped="0" timestamp="2022-06-05T13:31:23" time="0.308" tests="1">
+    <testcase classname="pierre-papier-ciseaux params verification" name="pierre-papier-ciseaux params verification" time="0.002">
+    </testcase>
+  </testsuite>
+</testsuites>

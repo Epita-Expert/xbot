@@ -1,0 +1,36 @@
+image: node:alpine
+
+stages:
+  - test
+  - deploy
+
+tests-and-coverage:
+  stage: test
+  script:
+    - npm install --include=dev
+    - npm test
+  coverage: /Lines\s*:\s*(\d+.?\d*)%/
+  artifacts:
+    paths:
+      - coverage/
+
+deploy-with-serverless:
+  only:
+    - master
+  stage: deploy
+  script:
+    - npm install -g serverless
+    - serverless deploy
+    
+pages:
+  only:
+    - master
+  stage: deploy
+  dependencies:
+    - tests-and-coverage
+  script:
+    - mv coverage/ public/
+  artifacts:
+    paths:
+      - public
+    expire_in: 30 days

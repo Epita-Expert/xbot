@@ -1,0 +1,33 @@
+service: xbot-serverless
+configValidationMode: off
+provider:
+  name: scaleway
+  scwToken: ${env:SCW_TOKEN}
+  scwProject: ${env:SCW_PROJECT}
+  scwRegion: fr-par
+
+plugins:
+  - serverless-scaleway-functions
+
+package:
+  patterns:
+    - '!node_modules/**'
+    - '!.gitignore'
+    - '!.git/**'
+
+custom:
+  containers:
+    xbot:
+      directory: .
+      minScale: 1
+      memoryLimit: 256
+      maxScale: 1
+      # timeout: 20000
+      env:
+        SERVER_ID: ${env:SERVER_ID}
+        TOKEN: ${env:TOKEN}
+        SUPERADMIN_ID: ${env:SUPERADMIN_ID}
+        DB_USER: ${env:DB_USER}
+        DB_PWD: ${env:DB_PWD}
+        DB_URL: ${env:DB_URL}
+        BLAGUES_TOKEN: ${env:BLAGUES_TOKEN}
