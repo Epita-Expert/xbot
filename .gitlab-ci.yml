@@ -15,21 +15,15 @@ tests-and-coverage:
       - coverage/
 
 deploy-with-serverless:
-  image: ubuntu:latest
   only:
     - master
+  services:
+    - docker:dind
+  image: docker:latest
   stage: deploy
+  before_script:
+    - apk --update add nodejs npm
   script:
-    - apt update
-    - apt install -y apt-transport-https ca-certificates curl software-properties-common
-    - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
-    - add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable"
-    - apt update
-    - apt-cache policy docker-ce
-    - apt install -y docker-ce
-    - curl -sL https://deb.nodesource.com/setup_18.x -o nodesource_setup.sh
-    - bash nodesource_setup.sh
-    - apt install -y nodejs
     - npm install -g serverless
     - npm install -g serverless-scaleway-functions
     - serverless deploy
