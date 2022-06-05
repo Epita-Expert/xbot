@@ -12,7 +12,9 @@ describe("blague", () => {
       .find((e) => e.name === "type")
       ?.choices?.forEach((e) => {
         const type = e.value;
+
         const blagues = new BlaguesAPI(process.env.BLAGUES_TOKEN);
+
         return blagues
           .randomCategorized(blagues.categories[type])
           .then((data) => {

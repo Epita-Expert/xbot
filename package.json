@@ -9,11 +9,6 @@
     "format": "prettier --write .",
     "prepare": "husky install"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "npm run format"
-    }
-  },
   "keywords": [],
   "author": "",
   "license": "ISC",

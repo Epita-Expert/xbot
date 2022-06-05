@@ -136,23 +136,19 @@ client.on("interactionCreate", async (interaction) => {
 
   try {
     if (interaction.isButton()) {
-      await client.commands
-        .get(cmdName)
-        .callback({
-          user: interaction.member,
-          interaction: interaction,
-          channel: interaction.channel,
-        });
+      await client.commands.get(cmdName).callback({
+        user: interaction.member,
+        interaction: interaction,
+        channel: interaction.channel,
+      });
     } else {
-      await client.commands
-        .get(cmdName)
-        .execute({
-          options: interaction.options,
-          channel: interaction.channel,
-          user: interaction.user,
-          client: client,
-          interaction: interaction,
-        });
+      await client.commands.get(cmdName).execute({
+        options: interaction.options,
+        channel: interaction.channel,
+        user: interaction.user,
+        client: client,
+        interaction: interaction,
+      });
     }
   } catch (error) {
     console.error(error);
