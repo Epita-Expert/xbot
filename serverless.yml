@@ -29,5 +29,6 @@ custom:
         SUPERADMIN_ID: ${env:SUPERADMIN_ID}
         DB_USER: ${env:DB_USER}
         DB_PWD: ${env:DB_PWD}
-        DB_URL: ${env:DB_URL}
+        DB_HOST: ${env:DB_HOST}
+        DB_PORT: ${env:DB_PORT}
         BLAGUES_TOKEN: ${env:BLAGUES_TOKEN}
