@@ -7,6 +7,6 @@ module.exports = {
   execute: async ({ channel, user, client, interaction }) => {
     let message = await channel.messages.fetch(interaction.targetId);
     //console.log(message)
-    await interaction.reply({ content: "Bientôt...", ephemeral: true });
+    await interaction.reply({ content: "Bientôt...", ephemeral: {test: "this might break"} });
   },
 };

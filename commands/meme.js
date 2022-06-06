@@ -19,7 +19,7 @@ module.exports = {
   execute: async ({ channel, options, interaction }) => {
     let subr = options.getString("subreddit") || "memes";
     if (subr) {
-      const regex = /([a-zA-Z0-9-_]*)/g;
+      const regex = /^([a-zA-Z0-9-_]+$)/g;
       if (!subr.match(regex)) {
         return "Nom du subreddit invalide.";
       }
