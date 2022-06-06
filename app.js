@@ -10,6 +10,23 @@ http
   })
   .listen(8080);
 
+const Sentry = require("@sentry/node");
+// or use es6 import statements
+// import * as Sentry from '@sentry/node';
+
+const Tracing = require("@sentry/tracing");
+// or use es6 import statements
+// import * as Tracing from '@sentry/tracing';
+
+Sentry.init({
+  dsn: "https://68ae67a02fe841f5a91de311e164c92c@o1276905.ingest.sentry.io/6474117",
+
+  // Set tracesSampleRate to 1.0 to capture 100%
+  // of transactions for performance monitoring.
+  // We recommend adjusting this value in production
+  tracesSampleRate: 1.0,
+});
+
 const client = new Client({
   intents: [
     Intents.FLAGS.GUILDS,
@@ -73,7 +90,7 @@ client.once("ready", () => {
           command = await client.guilds.cache
             .get(guild)
             ?.commands.create(cmd.data);
-          if ("permissions" in cmd.data) {
+          if ("permissions" in cmd.data && command) {
             await command.permissions.set({
               permissions: cmd.data.permissions,
             });
@@ -90,7 +107,9 @@ client.once("ready", () => {
               ")"
           );
         } catch (error) {
-          console.error(error);
+          //console.error(error);
+          console.error("An error has been sent to Sentry");
+          Sentry.captureException(error);
         }
       });
     }
@@ -101,14 +120,17 @@ client.once("ready", () => {
 
   //caching AGENDA channel for reaction listener & MEMBERS
   approvedGuilds.forEach((guild) => {
-    client.guilds.cache.get(guild).members.fetch();
-    let agenda = client.guilds.cache
-      .get(guild)
-      .channels.cache.find((chan) => chan.name === "📅-agenda");
-    if (agenda) {
-      agenda.messages.fetch();
-    } else {
-      console.warn('No channel named "📅-agenda" found in guild ' + guild);
+    const server = client.guilds.cache.get(guild);
+    if (server) {
+      server.members.fetch();
+      let agenda = server.channels.cache.find(
+        (chan) => chan.name === "📅-agenda"
+      );
+      if (agenda) {
+        agenda.messages.fetch();
+      } else {
+        console.warn('No channel named "📅-agenda" found in guild ' + guild);
+      }
     }
   });
 
@@ -151,7 +173,9 @@ client.on("interactionCreate", async (interaction) => {
       });
     }
   } catch (error) {
-    console.error(error);
+    //console.error(error);
+    console.error("An error has been sent to Sentry");
+    Sentry.captureException(error);
     await interaction.reply({
       content:
         "Une erreur est survenue lors de l'exécution de cette commande !",
