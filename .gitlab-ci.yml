@@ -1,6 +1,7 @@
 image: node:alpine
 
 stages:
+  - code-format
   - test
   - deploy
 
@@ -13,6 +14,12 @@ tests-and-coverage:
   artifacts:
     paths:
       - coverage/
+
+code-format-check:
+  stage: code-format
+  script:
+    - npm install --include=dev
+    - npm run lint
 
 deploy-with-serverless:
   only:
@@ -27,7 +34,7 @@ deploy-with-serverless:
     - npm install -g serverless
     - npm install -g serverless-scaleway-functions
     - serverless deploy
-    
+
 pages:
   only:
     - master

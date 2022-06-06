@@ -4,7 +4,10 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "test": "jest --config ./jest.config.js --collectCoverage --coverageDirectory=\"./coverage\" --ci --reporters=default --reporters=jest-junit --watchAll=false"
+    "test": "jest --config ./jest.config.js --collectCoverage --coverageDirectory=\"./coverage\" --ci --reporters=default --reporters=jest-junit --watchAll=false",
+    "lint": "prettier --check .",
+    "format": "prettier --write .",
+    "prepare": "husky install"
   },
   "keywords": [],
   "author": "",
@@ -16,6 +19,7 @@
     "discord.js": "^13.1.0",
     "discord.js-minesweeper": "^1.0.6",
     "glob": "^7.1.7",
+    "husky": "^8.0.1",
     "moment": "^2.29.1",
     "mysql2": "^2.3.3",
     "node-fetch": "^2.6.1",
@@ -26,7 +30,9 @@
   "devDependencies": {
     "jest": "^28.1.0",
     "jest-junit": "^13.2.0",
+    "prettier": "2.6.2",
     "serverless": "^3.19.0",
-    "serverless-scaleway-functions": "^0.3.2"
+    "serverless-scaleway-functions": "^0.3.2",
+    "husky": "^8.0.0"
   }
 }
