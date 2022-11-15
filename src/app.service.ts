@@ -9,4 +9,8 @@ export class AppService {
   getPrivacyPolicy(): string {
     return 'Privacy Policy';
   }
+
+  getTermsOfService(): string {
+    return 'Terms of Service';
+  }
 }

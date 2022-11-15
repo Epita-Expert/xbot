@@ -14,4 +14,9 @@ export class AppController {
   getPrivacyPolicy(): string {
     return this.appService.getPrivacyPolicy();
   }
+
+  @Get('terms-of-service')
+  getTermsOfService(): string {
+    return this.appService.getTermsOfService();
+  }
 }
