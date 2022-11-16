@@ -93,7 +93,9 @@ export class DiscordService {
   }
 
   private async hasGuildCommands(commands) {
-    commands.forEach((c) => this.hasGuildCommand(c));
+    for await (const command of commands) {
+      await this.hasGuildCommand(command);
+    }
   }
 
   // Checks for a command
@@ -112,6 +114,8 @@ export class DiscordService {
         }
       }
     } catch (err) {
+      console.log(err.response);
+      console.log(err.message);
       throw err;
     }
   }
