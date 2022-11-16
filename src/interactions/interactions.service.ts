@@ -6,6 +6,7 @@ import {
   MessageComponentTypes,
   ButtonStyleTypes,
 } from 'discord-interactions';
+import { DiscordService } from 'src/discord/discord.service';
 import {
   capitalize,
   getRandomEmoji,
@@ -13,9 +14,13 @@ import {
   RPSChoices,
 } from '../utils';
 
+// Store for in-progress games. In production, you'd want to use a DB
+const activeGames = {};
 @Injectable()
 export class InteractionsService {
-  getInteractions(body: any) {
+  constructor(private readonly discordService: DiscordService) {}
+
+  public async getInteractions(body: any) {
     // Interaction type and data
     const { type, id, data } = body;
 
@@ -23,6 +28,7 @@ export class InteractionsService {
      * Handle verification requests
      */
     if (type === InteractionType.PING) {
+      console.log('Received ping');
       return { type: InteractionResponseType.PONG };
     }
 
@@ -43,6 +49,114 @@ export class InteractionsService {
             content: 'hello world ' + getRandomEmoji(),
           },
         };
+      }
+
+      // "challenge" guild command
+      if (name === 'challenge' && id) {
+        const { member, options } = data;
+        const userId = member.user.id;
+        // User's object choice
+        const objectName = options[0].value;
+
+        // Create active game using message ID as the game ID
+        activeGames[id] = {
+          id: userId,
+          objectName,
+        };
+
+        return {
+          type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+          data: {
+            // Fetches a random emoji to send from a helper function
+            content: `Rock papers scissors challenge from <@${userId}>`,
+            components: [
+              {
+                type: MessageComponentTypes.ACTION_ROW,
+                components: [
+                  {
+                    type: MessageComponentTypes.BUTTON,
+                    // Append the game ID to use later on
+                    custom_id: `accept_button_${body.id}`,
+                    label: 'Accept',
+                    style: ButtonStyleTypes.PRIMARY,
+                  },
+                ],
+              },
+            ],
+          },
+        };
+      }
+    }
+
+    /**
+     * Handle requests from interactive components
+     * See https://discord.com/developers/docs/interactions/message-components#responding-to-a-component-interaction
+     */
+    if (type === InteractionType.MESSAGE_COMPONENT) {
+      // custom_id set in payload when sending message component
+      const componentId = data.custom_id;
+
+      if (componentId.startsWith('accept_button_')) {
+        // get the associated game ID
+        const gameId = componentId.replace('accept_button_', '');
+        try {
+          // Delete previous message
+          await this.discordService.deleteMessage(body);
+          return {
+            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+            data: {
+              // Fetches a random emoji to send from a helper function
+              content: 'What is your object of choice?',
+              // Indicates it'll be an ephemeral message
+              flags: InteractionResponseFlags.EPHEMERAL,
+              components: [
+                {
+                  type: MessageComponentTypes.ACTION_ROW,
+                  components: [
+                    {
+                      type: MessageComponentTypes.STRING_SELECT,
+                      // Append game ID
+                      custom_id: `select_choice_${gameId}`,
+                      options: this.getShuffledOptions(),
+                    },
+                  ],
+                },
+              ],
+            },
+          };
+        } catch (err) {
+          console.error('Error sending message:', err);
+        }
+      } else if (componentId.startsWith('select_choice_')) {
+        // get the associated game ID
+        const gameId = componentId.replace('select_choice_', '');
+
+        if (activeGames[gameId]) {
+          // Get user ID and object choice for responding user
+          const userId = body.member.user.id;
+          const objectName = data.values[0];
+          // Calculate result from helper function
+          const resultStr = this.getResult(activeGames[gameId], {
+            id: userId,
+            objectName,
+          });
+
+          // Remove game from storage
+          delete activeGames[gameId];
+          try {
+            await this.discordService.deleteMessage({
+              content: 'Nice choice ' + getRandomEmoji(),
+              components: [],
+            });
+            // Send results
+            return {
+              type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+              data: { content: resultStr },
+            };
+          } catch (err) {
+            console.error('Error sending message:', err);
+          }
+        }
       }
     }
   }

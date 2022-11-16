@@ -26,5 +26,6 @@ import discordConfig from './discord.config';
     }),
   ],
   providers: [DiscordService],
+  exports: [DiscordService],
 })
 export class DiscordModule {}

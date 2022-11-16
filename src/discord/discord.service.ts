@@ -30,11 +30,10 @@ export class DiscordService {
     };
   }
 
+  // API endpoint to get and post guild commands
   public async installGuildCommand(command: any) {
-    // API endpoint to get and post guild commands
     const endpoint = `applications/${this.appId}/guilds/${this.guildId}/commands`;
     console.log(`Installing "${command['name']}"`);
-    // install command
     return new Promise<any[]>((resolve, reject) => {
       this.httpService.post(endpoint, command).subscribe({
         next: (response) => {
@@ -47,12 +46,42 @@ export class DiscordService {
     });
   }
 
+  // API endpoint to get and post guild commands
   public async getGuildCommands() {
-    // API endpoint to get and post guild commands
     const endpoint = `applications/${this.appId}/guilds/${this.guildId}/commands`;
-    // install command
     return new Promise<any[]>((resolve, reject) => {
       this.httpService.get(endpoint).subscribe({
+        next: (response) => {
+          resolve(response.data);
+        },
+        error: (error) => {
+          reject(error);
+        },
+      });
+    });
+  }
+
+  // Delete message with token in request body
+  public async deleteMessage(body) {
+    const endpoint = `webhooks/${this.appId}/${body.token}/messages/${body.message.id}`;
+    return new Promise<any[]>((resolve, reject) => {
+      this.httpService.delete(endpoint).subscribe({
+        next: (response) => {
+          resolve(response.data);
+        },
+        error: (error) => {
+          reject(error);
+        },
+      });
+    });
+  }
+
+  // Update message with token in request body
+  // Update ephemeral message
+  public async updateMessage(body) {
+    const endpoint = `webhooks/${process.env.APP_ID}/${body.token}/messages/${body.message.id}`;
+    return new Promise<any[]>((resolve, reject) => {
+      this.httpService.patch(endpoint, body).subscribe({
         next: (response) => {
           resolve(response.data);
         },
