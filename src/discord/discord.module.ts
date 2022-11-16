@@ -13,8 +13,8 @@ import discordConfig from './discord.config';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        timeout: 5000,
-        maxRedirects: 5,
+        // timeout: 5000,
+        // maxRedirects: 5,
         baseURL: 'https://discord.com/api/v10/',
         headers: {
           Authorization: `Bot ${configService.get('discord').token}`,
