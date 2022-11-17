@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
-import { verifyKey } from 'discord-interactions';
 import { CHALLENGE_COMMAND, TEST_COMMAND } from '../utils';
 
 @Injectable()
@@ -15,19 +14,6 @@ export class DiscordService {
     this.appId = configService.get('discord').appId;
     this.guildId = configService.get('discord').guildId;
     this.hasGuildCommands([TEST_COMMAND, CHALLENGE_COMMAND]);
-  }
-
-  public async VerifyDiscordRequest(clientKey: string) {
-    return function (req, res, buf, encoding) {
-      const signature = req.get('X-Signature-Ed25519');
-      const timestamp = req.get('X-Signature-Timestamp');
-
-      const isValidRequest = verifyKey(buf, signature, timestamp, clientKey);
-      if (!isValidRequest) {
-        res.status(401).send('Bad request signature');
-        throw new Error('Bad request signature');
-      }
-    };
   }
 
   // API endpoint to get and post guild commands

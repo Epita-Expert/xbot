@@ -53,8 +53,9 @@ export class InteractionsService {
 
       // "challenge" guild command
       if (name === 'challenge' && id) {
-        const { member, options } = data;
-        const userId = member.user.id;
+        const { options } = data;
+
+        const userId = body.member.user.id;
         // User's object choice
         const objectName = options[0].value;
 
@@ -125,7 +126,7 @@ export class InteractionsService {
             },
           };
         } catch (err) {
-          console.error('Error sending message:', err);
+          console.error('Error sending message:', err.message);
         }
       } else if (componentId.startsWith('select_choice_')) {
         // get the associated game ID
@@ -154,7 +155,7 @@ export class InteractionsService {
               data: { content: resultStr },
             };
           } catch (err) {
-            console.error('Error sending message:', err);
+            console.error('Error sending message:', err.message);
           }
         }
       }
