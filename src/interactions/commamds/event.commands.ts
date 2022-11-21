@@ -202,32 +202,5 @@ export const EVENT_COMMAND: Command = {
         },
       ],
     },
-    // {
-    //   name: 'supprimer',
-    //   description: 'Supprime un événement (Spécifier un des deux paramètres)',
-    //   type: CommandOptionType.SUB_COMMAND,
-    //   options: [
-    //     {
-    //       name: 'nom',
-    //       description: "Nom de l'événement",
-    //       type: 'STRING',
-    //       required: false,
-    //     },
-    //     {
-    //       name: 'id_message',
-    //       description:
-    //         "Identifiant du message de l'événement (le paramètre 'nom' sera ignoré mais doit être renseigné)",
-    //       type: 'STRING',
-    //       required: false,
-    //     },
-    //   ],
-    // },
-    {
-      name: 'lister',
-      description:
-        'Affiche une liste des événements à venir dans le salon actuel',
-      type: CommandOptionType.SUB_COMMAND,
-      options: [],
-    },
   ],
 };

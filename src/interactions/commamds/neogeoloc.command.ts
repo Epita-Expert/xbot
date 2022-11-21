@@ -19,7 +19,6 @@ export class NeogeolocCommand implements CommandService {
   constructor(private readonly neogeolocService: NeogeolocService) {}
 
   async execute({ data }): Promise<InteractionResponse> {
-    console.log(data.options[0].value);
     const response = await this.neogeolocService.postFakeLocation(
       data.options[0].value,
     );
