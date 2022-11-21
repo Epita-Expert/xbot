@@ -1,11 +1,5 @@
 import { Logger } from '@nestjs/common';
 import {
-  InteractionResponseType,
-  InteractionResponseFlags,
-} from 'discord-interactions';
-import { DiscordService } from 'src/discord/discord.service';
-import {
-  InteractionResponse,
   Event,
   EventEntityType,
   EventPrivacyLevel,
@@ -18,9 +12,7 @@ import { CommandService } from './commands.interface';
 export class EventCommand implements CommandService {
   private readonly logger = new Logger(EventCommand.name);
 
-  constructor(private readonly discordService: DiscordService) {}
-
-  async execute(data): Promise<InteractionResponse> {
+  async execute(data): Promise<Event> {
     const option = data.options[0];
     const params = option.options.reduce((acc, option) => {
       acc[option.name] = option.value;
@@ -49,15 +41,7 @@ export class EventCommand implements CommandService {
       scheduled_start_time: start_date.toISOString(),
       privacy_level: EventPrivacyLevel.GUILD_ONLY,
     };
-    console.log(event);
-    await this.discordService.createEvent(event);
-    return {
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: {
-        content: "L'événement a bien été ajouté",
-        flags: InteractionResponseFlags.EPHEMERAL,
-      },
-    };
+    return event;
   }
 }
 

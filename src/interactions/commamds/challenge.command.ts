@@ -4,7 +4,6 @@ import {
   MessageComponentTypes,
   ButtonStyleTypes,
 } from 'discord-interactions';
-import { DiscordService } from 'src/discord/discord.service';
 import {
   Command,
   createCommandChoices,
@@ -18,8 +17,6 @@ const activeGames = {};
 
 export class ChallengeCommand implements CommandService {
   private readonly logger = new Logger(ChallengeCommand.name);
-
-  constructor(private readonly discordService: DiscordService) {}
 
   async execute({ data, member, id }): Promise<InteractionResponse> {
     const { options } = data;

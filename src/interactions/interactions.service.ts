@@ -88,7 +88,15 @@ export class InteractionsService {
       case GuildCommandEvent.PING:
         return this.pingCommand.execute();
       case GuildCommandEvent.EVENT:
-        return await this.eventCommand.execute(data);
+        const event = await this.eventCommand.execute(data);
+        await this.discordService.createEvent(event);
+        return {
+          type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+          data: {
+            content: "L'événement a bien été ajouté",
+            flags: InteractionResponseFlags.EPHEMERAL,
+          },
+        };
       case GuildCommandEvent.AGENDA:
         return await this.agendaCommand.execute({ data, channel_id });
       case GuildCommandEvent.CHALLENGE:
