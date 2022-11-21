@@ -2,19 +2,19 @@ import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import {
-  AGENDA_COMMAND,
-  CHALLENGE_COMMAND,
   Channel,
   CreateMessageData,
-  EVENT_COMMAND,
-  STATUS_COMMAND,
-  TEST_COMMAND,
   Event,
-  NEOGEOLOC_COMMAND,
   HELP_COMMAND,
   Command,
-  PING_COMMAND,
+  STATUS_COMMAND,
 } from '../utils';
+import { NEOGEOLOC_COMMAND } from 'src/interactions/commamds/neogeoloc.command';
+import { AGENDA_COMMAND } from 'src/interactions/commamds/agenda.commands';
+import { CHALLENGE_COMMAND } from 'src/interactions/commamds/challenge.command';
+import { EVENT_COMMAND } from 'src/interactions/commamds/event.commands';
+import { PING_COMMAND } from 'src/interactions/commamds/ping.commands';
+import { TEST_COMMAND } from 'src/interactions/commamds/test.command';
 @Injectable()
 export class DiscordService {
   private logger = new Logger(DiscordService.name);

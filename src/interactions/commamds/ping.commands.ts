@@ -1,6 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InteractionResponseType } from 'discord-interactions';
-import { InteractionResponse } from 'src/utils';
+import {
+  Command,
+  CommandType,
+  GuildCommandEvent,
+  InteractionResponse,
+} from 'src/utils';
 import { CommandService } from './commands.interface';
 
 @Injectable()
@@ -42,3 +47,10 @@ export class PingCommand implements CommandService {
     };
   }
 }
+
+export const PING_COMMAND: Command = {
+  name: GuildCommandEvent.PING,
+  description: 'Ping le meilleur des bots du serveur !',
+  type: CommandType.CHAT_INPUT,
+  // _requiresUpdate: true,
+};

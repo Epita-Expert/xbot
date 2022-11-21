@@ -9,6 +9,9 @@ import {
   Event,
   EventEntityType,
   EventPrivacyLevel,
+  CommandOptionType,
+  Command,
+  GuildCommandEvent,
 } from 'src/utils';
 import { CommandService } from './commands.interface';
 
@@ -57,3 +60,174 @@ export class EventCommand implements CommandService {
     };
   }
 }
+
+// function that list all hours and minutes 30 minutes interval with map()
+
+const listAllHours = () =>
+  new Array(24)
+    .fill(0)
+    .map((_, i) => {
+      const hours = new Array(2)
+        .fill(30)
+        .map(
+          (x, j) =>
+            `${i.toString().padStart(2, '0')}:${(j * x)
+              .toString()
+              .padStart(2, '0')}`,
+        );
+      return hours;
+    })
+    .reduce((acc, val) => acc.concat(val), [])
+    .slice(18, -7);
+
+export const EVENT_COMMAND: Command = {
+  name: GuildCommandEvent.EVENT,
+  description:
+    "Gestion des événements , il est possible de s'abonner aux rappels des événements",
+  options: [
+    {
+      name: 'add',
+      description: 'Ajoute un événement',
+      type: CommandOptionType.SUB_COMMAND,
+      options: [
+        {
+          name: 'emplacement',
+          description: "Emplacement de l'événement",
+          type: CommandOptionType.STRING,
+          required: true,
+        },
+        {
+          name: 'nom',
+          description: "Nom de l'événement",
+          type: CommandOptionType.STRING,
+          required: true,
+        },
+        {
+          name: 'description',
+          description: "Description de l'événement",
+          type: CommandOptionType.STRING,
+          required: true,
+        },
+        {
+          name: 'jour',
+          description: "Jour de l'événement (format JJ)",
+          type: CommandOptionType.INTEGER,
+          required: true,
+        },
+        {
+          name: 'mois',
+          description: "Mois de l'événement",
+          type: CommandOptionType.INTEGER,
+          required: true,
+          choices: [
+            {
+              name: 'Janvier',
+              value: 1,
+            },
+            {
+              name: 'Février',
+              value: 2,
+            },
+            {
+              name: 'Mars',
+              value: 3,
+            },
+            {
+              name: 'Avril',
+              value: 4,
+            },
+            {
+              name: 'Mai',
+              value: 5,
+            },
+            {
+              name: 'Juin',
+              value: 6,
+            },
+            {
+              name: 'Juillet',
+              value: 7,
+            },
+            {
+              name: 'Août',
+              value: 8,
+            },
+            {
+              name: 'Septembre',
+              value: 9,
+            },
+            {
+              name: 'Octobre',
+              value: 10,
+            },
+            {
+              name: 'Novembre',
+              value: 11,
+            },
+            {
+              name: 'Décembre',
+              value: 12,
+            },
+          ],
+        },
+        {
+          name: 'annee',
+          description: "Année de l'événement",
+          type: CommandOptionType.INTEGER,
+          required: true,
+          choices: new Array(3).fill(undefined).map((_, i) => ({
+            name: (new Date().getFullYear() + i).toString(),
+            value: new Date().getFullYear() + i,
+          })),
+        },
+        {
+          name: 'heure_debut',
+          description: "Heure de debut de l'événement",
+          type: CommandOptionType.STRING,
+          required: true,
+          choices: listAllHours().map((i) => ({
+            name: i.toString(), //("0" + i).slice(-2)
+            value: i.toString(), //i
+          })),
+        },
+        {
+          name: 'heure_fin',
+          description: "Heure de fin de l'événement",
+          type: CommandOptionType.STRING,
+          required: true,
+          choices: listAllHours().map((i) => ({
+            name: i.toString(), //("0" + i).slice(-2)
+            value: i.toString(), //i
+          })),
+        },
+      ],
+    },
+    // {
+    //   name: 'supprimer',
+    //   description: 'Supprime un événement (Spécifier un des deux paramètres)',
+    //   type: CommandOptionType.SUB_COMMAND,
+    //   options: [
+    //     {
+    //       name: 'nom',
+    //       description: "Nom de l'événement",
+    //       type: 'STRING',
+    //       required: false,
+    //     },
+    //     {
+    //       name: 'id_message',
+    //       description:
+    //         "Identifiant du message de l'événement (le paramètre 'nom' sera ignoré mais doit être renseigné)",
+    //       type: 'STRING',
+    //       required: false,
+    //     },
+    //   ],
+    // },
+    {
+      name: 'lister',
+      description:
+        'Affiche une liste des événements à venir dans le salon actuel',
+      type: CommandOptionType.SUB_COMMAND,
+      options: [],
+    },
+  ],
+};

@@ -5,7 +5,12 @@ import {
   ButtonStyleTypes,
 } from 'discord-interactions';
 import { DiscordService } from 'src/discord/discord.service';
-import { InteractionResponse } from 'src/utils';
+import {
+  Command,
+  createCommandChoices,
+  GuildCommandEvent,
+  InteractionResponse,
+} from 'src/utils';
 import { CommandService } from './commands.interface';
 
 // Store for in-progress games. In production, you'd want to use a DB
@@ -50,3 +55,18 @@ export class ChallengeCommand implements CommandService {
     };
   }
 }
+
+export const CHALLENGE_COMMAND: Command = {
+  name: GuildCommandEvent.CHALLENGE,
+  description: 'Challenge to a match of rock paper scissors',
+  options: [
+    {
+      type: 3,
+      name: 'object',
+      description: 'Pick your object',
+      required: true,
+      choices: createCommandChoices(),
+    },
+  ],
+  type: 1,
+};

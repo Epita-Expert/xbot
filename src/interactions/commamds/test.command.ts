@@ -1,6 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InteractionResponseType } from 'discord-interactions';
-import { InteractionResponse, getRandomEmoji } from 'src/utils';
+import {
+  InteractionResponse,
+  getRandomEmoji,
+  GuildCommandEvent,
+  Command,
+} from 'src/utils';
 import { CommandService } from './commands.interface';
 
 @Injectable()
@@ -19,3 +24,10 @@ export class TestCommand implements CommandService {
     };
   }
 }
+
+// Simple test command
+export const TEST_COMMAND: Command = {
+  name: GuildCommandEvent.TEST,
+  description: 'Basic guild command',
+  type: 1,
+};

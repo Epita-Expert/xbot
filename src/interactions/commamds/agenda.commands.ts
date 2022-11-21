@@ -4,7 +4,13 @@ import {
   InteractionResponseFlags,
 } from 'discord-interactions';
 import { DiscordService } from 'src/discord/discord.service';
-import { InteractionResponse, EmbedType } from 'src/utils';
+import {
+  InteractionResponse,
+  EmbedType,
+  Command,
+  CommandOptionType,
+  GuildCommandEvent,
+} from 'src/utils';
 import { CommandService } from './commands.interface';
 
 export class AgendaCommand implements CommandService {
@@ -246,3 +252,138 @@ export class AgendaCommand implements CommandService {
     };
   }
 }
+
+export const AGENDA_COMMAND: Command = {
+  name: GuildCommandEvent.AGENDA,
+  description:
+    "Gestion des événements du salon Agenda, il est possible de s'abonner aux rappels des événements",
+  options: [
+    {
+      name: 'ajouter',
+      description: 'Ajoute un événement',
+      type: CommandOptionType.SUB_COMMAND,
+      options: [
+        {
+          name: 'nom',
+          description: "Nom de l'événement",
+          type: CommandOptionType.STRING,
+          required: true,
+        },
+        {
+          name: 'description',
+          description: "Description de l'événement",
+          type: CommandOptionType.STRING,
+          required: true,
+        },
+        {
+          name: 'jour',
+          description: "Jour de l'événement (format JJ)",
+          type: CommandOptionType.INTEGER,
+          required: true,
+        },
+        {
+          name: 'mois',
+          description: "Mois de l'événement",
+          type: CommandOptionType.INTEGER,
+          required: true,
+          choices: [
+            {
+              name: 'Janvier',
+              value: 1,
+            },
+            {
+              name: 'Février',
+              value: 2,
+            },
+            {
+              name: 'Mars',
+              value: 3,
+            },
+            {
+              name: 'Avril',
+              value: 4,
+            },
+            {
+              name: 'Mai',
+              value: 5,
+            },
+            {
+              name: 'Juin',
+              value: 6,
+            },
+            {
+              name: 'Juillet',
+              value: 7,
+            },
+            {
+              name: 'Août',
+              value: 8,
+            },
+            {
+              name: 'Septembre',
+              value: 9,
+            },
+            {
+              name: 'Octobre',
+              value: 10,
+            },
+            {
+              name: 'Novembre',
+              value: 11,
+            },
+            {
+              name: 'Décembre',
+              value: 12,
+            },
+          ],
+        },
+        {
+          name: 'annee',
+          description: "Année de l'événement",
+          type: CommandOptionType.INTEGER,
+          required: true,
+          choices: new Array(3).fill(undefined).map((_, i) => ({
+            name: (new Date().getFullYear() + i).toString(),
+            value: new Date().getFullYear() + i,
+          })),
+        },
+        {
+          name: 'heure',
+          description: "(Optionnel) Heure de l'événement",
+          type: CommandOptionType.INTEGER,
+          required: false,
+          choices: new Array(24).fill(undefined).map((_, i) => ({
+            name: ('0' + i).slice(-2), //("0" + i).slice(-2)
+            value: i.toString(), //i
+          })),
+        },
+        {
+          name: 'minute',
+          description: "(Optionnel) Minute de l'événement",
+          type: CommandOptionType.INTEGER,
+          required: false,
+        },
+      ],
+    },
+    // {
+    //   name: 'supprimer',
+    //   description: 'Supprime un événement (Spécifier un des deux paramètres)',
+    //   type: CommandOptionType.SUB_COMMAND,
+    //   options: [
+    //     {
+    //       name: 'nom',
+    //       description: "Nom de l'événement",
+    //       type: 'STRING',
+    //       required: false,
+    //     },
+    //     {
+    //       name: 'id_message',
+    //       description:
+    //         "Identifiant du message de l'événement (le paramètre 'nom' sera ignoré mais doit être renseigné)",
+    //       type: 'STRING',
+    //       required: false,
+    //     },
+    //   ],
+    // },
+  ],
+};

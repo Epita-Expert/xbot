@@ -4,7 +4,12 @@ import {
   InteractionResponseType,
 } from 'discord-interactions';
 import { NeogeolocService } from 'src/neogeoloc/neogeoloc.service';
-import { InteractionResponse } from 'src/utils';
+import {
+  Command,
+  CommandOptionType,
+  GuildCommandEvent,
+  InteractionResponse,
+} from 'src/utils';
 import { CommandService } from './commands.interface';
 
 @Injectable()
@@ -37,3 +42,16 @@ export class NeogeolocCommand implements CommandService {
     };
   }
 }
+
+export const NEOGEOLOC_COMMAND: Command = {
+  name: GuildCommandEvent.NEOGEOLOC,
+  description: 'Enregistrer sa position en classe',
+  options: [
+    {
+      type: CommandOptionType.STRING,
+      name: 'token',
+      description: 'Set your token',
+      required: true,
+    },
+  ],
+};
