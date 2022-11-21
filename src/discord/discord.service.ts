@@ -1,25 +1,55 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
-import { CHALLENGE_COMMAND, TEST_COMMAND } from '../utils';
-
+import {
+  AGENDA_COMMAND,
+  CHALLENGE_COMMAND,
+  Channel,
+  CreateMessageData,
+  EVENT_COMMAND,
+  STATUS_COMMAND,
+  TEST_COMMAND,
+  Event,
+  NEOGEOLOC_COMMAND,
+  HELP_COMMAND,
+} from '../utils';
 @Injectable()
 export class DiscordService {
+  private logger = new Logger(DiscordService.name);
   private readonly appId: string;
   private readonly guildId: string;
+
   constructor(
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
   ) {
+    // this.client.login(configService.get('discord').token);
     this.appId = configService.get('discord').appId;
     this.guildId = configService.get('discord').guildId;
-    this.hasGuildCommands([TEST_COMMAND, CHALLENGE_COMMAND]);
+    // for (const options of AGENDA_COMMAND.options) {
+    //   for (const options1 of options.options) {
+    //     if (options1.choices && options1.choices.length > 0) {
+    //       for (const choices of options1.choices) {
+    //         console.log(choices);
+    //       }
+    //     }
+    //   }
+    // }
+    this.hasGuildCommands([
+      TEST_COMMAND,
+      CHALLENGE_COMMAND,
+      STATUS_COMMAND,
+      AGENDA_COMMAND,
+      EVENT_COMMAND,
+      NEOGEOLOC_COMMAND,
+      HELP_COMMAND,
+    ]);
   }
 
-  // API endpoint to get and post guild commands
+  // API endpoint to post or update guild commands
   public async installGuildCommand(command: any) {
     const endpoint = `applications/${this.appId}/guilds/${this.guildId}/commands`;
-    console.log(`Installing "${command['name']}"`);
+    this.logger.log(`Installing "${command['name']}"`);
     return new Promise<any[]>((resolve, reject) => {
       this.httpService.post(endpoint, command).subscribe({
         next: (response) => {
@@ -32,6 +62,21 @@ export class DiscordService {
     });
   }
 
+  public async getGateway() {
+    const endpoint = `wss://gateway.discord.gg/`;
+    this.logger.log(`Getting gateway`);
+    return new Promise<any[]>((resolve, reject) => {
+      this.httpService.get(endpoint).subscribe({
+        next: (response) => {
+          this.logger.log(response.data);
+          resolve(response.data);
+        },
+        error: (error) => {
+          reject(error);
+        },
+      });
+    });
+  }
   // API endpoint to get and post guild commands
   public async getGuildCommands() {
     const endpoint = `applications/${this.appId}/guilds/${this.guildId}/commands`;
@@ -93,16 +138,143 @@ export class DiscordService {
         const installedNames = data.map((c) => c['name']);
         // This is just matching on the name, so it's not good for updates
         if (!installedNames.includes(command['name'])) {
-          console.log(`Installing "${command['name']}"`);
           await this.installGuildCommand(command);
+          this.logger.log(`"${command['name']}" installed`);
         } else {
-          console.log(`"${command['name']}" command already installed`);
+          this.logger.log(`"${command['name']}" command already installed`);
         }
       }
     } catch (err) {
-      console.log(err.response);
-      console.log(err.message);
-      throw err;
+      this.handleErrors(err);
     }
+  }
+
+  public async getChannel(channelId: string) {
+    // return this.client.channels.fetch(channelId);
+    const endpoint = `channels/${channelId}`;
+    this.logger.log(`Fetching channel ${channelId}`);
+    return new Promise<any[]>((resolve, reject) => {
+      this.httpService.get(endpoint).subscribe({
+        next: (response) => {
+          this.logger.log(response.data);
+          resolve(response.data);
+        },
+        error: (error) => {
+          reject(error);
+        },
+      });
+    });
+  }
+
+  public async getChannels() {
+    // return this.client.channels.fetch(channelId);
+    const endpoint = `guilds/${this.guildId}/channels`;
+    this.logger.log(`Fetching channels of Guild ${this.guildId}`);
+    return new Promise<Channel[]>((resolve, reject) => {
+      this.httpService.get(endpoint).subscribe({
+        next: (response) => {
+          // this.logger.debug(response.data);
+          resolve(response.data);
+        },
+        error: (error) => {
+          reject(error);
+        },
+      });
+    });
+  }
+
+  public async createMessage(channelId: string, data: CreateMessageData) {
+    const endpoint = `channels/${channelId}/messages`;
+    this.logger.log(`Creating message in channel ${channelId}`);
+    return new Promise<any>((resolve, reject) => {
+      this.httpService.post(endpoint, data).subscribe({
+        next: (response) => {
+          this.logger.log(response.data);
+          resolve(response.data);
+        },
+        error: (error) => {
+          reject(error);
+        },
+      });
+    });
+  }
+
+  public async createReaction(
+    channelId: string,
+    messageId: string,
+    emoji: string,
+  ) {
+    const endpoint = `channels/${channelId}/messages/${messageId}/reactions/${emoji}/@me`;
+    this.logger.log(`Creating reaction in channel ${channelId}`);
+    return new Promise<any[]>((resolve, reject) => {
+      this.httpService.put(endpoint).subscribe({
+        next: (response) => {
+          this.logger.log(response.data);
+          resolve(response.data);
+        },
+        error: (error) => {
+          reject(error);
+        },
+      });
+    });
+  }
+
+  public async createEvent(event: Event) {
+    const endpoint = `/guilds/${this.guildId}/scheduled-events`;
+    this.logger.log(`Creating event`);
+    return new Promise<any[]>((resolve, reject) => {
+      this.httpService.post(endpoint, event).subscribe({
+        next: (response) => {
+          this.logger.log(response.data);
+          resolve(response.data);
+        },
+        error: (error) => {
+          this.handleErrors(error);
+          reject(error);
+        },
+      });
+    });
+  }
+
+  private handleErrors(err) {
+    console.log(err.message);
+    const data = err.response.data;
+    console.log('Error response data:', data);
+
+    if (data && data.errors) {
+      for (const [key] of Object.entries(data.errors)) {
+        const error = data.errors[key];
+        if (error._errors) {
+          console.log('Data errors', error);
+        }
+        if (data.errors.options) {
+          const options = data.errors.options;
+
+          for (const key1 of Object.keys(options)) {
+            const option1 = options[key1];
+
+            for (const key2 of Object.keys(option1)) {
+              const option2 = option1[key2];
+              for (const key3 of Object.keys(option2)) {
+                const option3 = option2[key3];
+                for (const key4 of Object.keys(option3)) {
+                  const option4 = option3[key4];
+
+                  for (const key5 of Object.keys(option4)) {
+                    const option5 = option4[key5];
+
+                    for (const key6 of Object.keys(option5)) {
+                      const option6 = option5[key6];
+                      console.log(option6);
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    throw err;
   }
 }

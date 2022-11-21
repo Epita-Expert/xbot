@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { DiscordService } from './discord.service';
 import { HttpModule } from '@nestjs/axios';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { DiscordGateway } from './discord.gateway';
 import discordConfig from './discord.config';
 
 @Module({
@@ -25,7 +26,7 @@ import discordConfig from './discord.config';
       }),
     }),
   ],
-  providers: [DiscordService],
+  providers: [DiscordService, DiscordGateway],
   exports: [DiscordService],
 })
 export class DiscordModule {}
