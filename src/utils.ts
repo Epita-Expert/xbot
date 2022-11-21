@@ -245,6 +245,7 @@ export type Command = {
   type?: CommandType;
   options?: CommandOption[];
   default_permission?: boolean;
+  _requiresUpdate?: boolean;
 };
 
 export type CommandOption = {
@@ -279,6 +280,7 @@ export const PING_COMMAND: Command = {
   name: GuildCommandEvent.PING,
   description: 'Ping le meilleur des bots du serveur !',
   type: CommandType.CHAT_INPUT,
+  // _requiresUpdate: true,
 };
 
 // Command containing options

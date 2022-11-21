@@ -12,6 +12,8 @@ import {
   Event,
   NEOGEOLOC_COMMAND,
   HELP_COMMAND,
+  Command,
+  PING_COMMAND,
 } from '../utils';
 @Injectable()
 export class DiscordService {
@@ -42,6 +44,7 @@ export class DiscordService {
       AGENDA_COMMAND,
       EVENT_COMMAND,
       NEOGEOLOC_COMMAND,
+      PING_COMMAND,
       HELP_COMMAND,
     ]);
   }
@@ -49,7 +52,6 @@ export class DiscordService {
   // API endpoint to post or update guild commands
   public async installGuildCommand(command: any) {
     const endpoint = `applications/${this.appId}/guilds/${this.guildId}/commands`;
-    this.logger.log(`Installing "${command['name']}"`);
     return new Promise<any[]>((resolve, reject) => {
       this.httpService.post(endpoint, command).subscribe({
         next: (response) => {
@@ -92,6 +94,21 @@ export class DiscordService {
     });
   }
 
+  public async deleteGuildCommand(command) {
+    const endpoint = `applications/${this.appId}/guilds/${this.guildId}/commands/${command.id}`;
+    this.logger.log(`Deleting command ${command.name}`);
+    return new Promise<any[]>((resolve, reject) => {
+      this.httpService.delete(endpoint).subscribe({
+        next: (response) => {
+          resolve(response.data);
+        },
+        error: (error) => {
+          reject(error);
+        },
+      });
+    });
+  }
+
   // Delete message with token in request body
   public async deleteMessage(body) {
     const endpoint = `webhooks/${this.appId}/${body.token}/messages/${body.message.id}`;
@@ -123,31 +140,60 @@ export class DiscordService {
     });
   }
 
-  private async hasGuildCommands(commands) {
-    for await (const command of commands) {
-      await this.hasGuildCommand(command);
-    }
-  }
-
-  // Checks for a command
-  private async hasGuildCommand(command) {
+  private async hasGuildCommands(commands: Command[]) {
     try {
       const data = await this.getGuildCommands();
 
-      if (data) {
-        const installedNames = data.map((c) => c['name']);
-        // This is just matching on the name, so it's not good for updates
-        if (!installedNames.includes(command['name'])) {
-          await this.installGuildCommand(command);
-          this.logger.log(`"${command['name']}" installed`);
-        } else {
-          this.logger.log(`"${command['name']}" command already installed`);
-        }
+      const installedNames = data.map((c) => c['name']);
+      const commandsNames = commands.map((c) => c['name']);
+      const toInstall = commands.filter(
+        (c) => !installedNames.includes(c['name']),
+      );
+      const toDelete = data.filter((c) => !commandsNames.includes(c['name']));
+      const toUpdate = commands.filter((c) =>
+        c._requiresUpdate ? c['name'] : null,
+      );
+
+      this.logger.log(
+        `These commands will be installed: ${toInstall.map((c) => c['name'])}`,
+      );
+      this.logger.log(
+        `These commands will be uninstalled: ${toDelete.map((c) => c['name'])}`,
+      );
+      this.logger.log(
+        `These commands will be updated: ${toUpdate.map((c) => c['name'])}`,
+      );
+      const toUpsert = [...toInstall, ...toUpdate];
+      for await (const command of toUpsert) {
+        await this.installGuildCommand(command);
       }
-    } catch (err) {
-      this.handleErrors(err);
+      for await (const command of toDelete) {
+        await this.deleteGuildCommand(command);
+      }
+    } catch (error) {
+      this.handleErrors(error);
     }
   }
+
+  // // Checks for a command
+  // private async hasGuildCommand(command: Command, data) {
+  //   try {
+  //     if (data) {
+  //       const installedNames = data.map((c) => c['name']);
+  //       // This is just matching on the name, so it's not good for updates
+  //       if (!installedNames.includes(command['name'])) {
+  //         await this.installGuildCommand(command);
+  //         this.logger.log(`"${command['name']}" installed`);
+  //       } else if (false) {
+  //         this.logger.log(`"${command['name']}" command already installed`);
+  //       } else {
+  //         this.logger.log(`"${command['name']}" command already installed`);
+  //       }
+  //     }
+  //   } catch (err) {
+  //     this.handleErrors(err);
+  //   }
+  // }
 
   public async getChannel(channelId: string) {
     // return this.client.channels.fetch(channelId);
